@@ -35,9 +35,9 @@ class Expense(
     @JdbcType(PostgreSQLEnumJdbcType::class)
     @Column(columnDefinition = "status", nullable = false)
     var status: Status = Status.PENDING,
-    
+
     @Column(nullable = false)
-var ammountDollars: Long = 0
+    var ammountDollars: Long = 0
 ) {
     constructor() : this(id = null)
 

@@ -1,8 +1,6 @@
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 
 export function useRequests() {
-  const router = useRouter();
   const error = ref<string | null>(null);
   const loading = ref<boolean>(false);
 
@@ -19,7 +17,8 @@ export function useRequests() {
         body: JSON.stringify({ userId: token, ammountDollars: ammountDollars, reason: reason}),
       });
 
-      console.log(await res.json())
+        const body = await res.json()
+        console.log(body)
 
       if (!res.ok) throw new Error("Invalid credentials");
 

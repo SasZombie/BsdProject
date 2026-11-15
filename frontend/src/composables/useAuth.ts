@@ -1,33 +1,34 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import type { User } from "../types";
 
-export function useAuth() {
+const currentUser = ref<User | null>(null);
+
+export const useAuth = () => {
   const router = useRouter();
   const error = ref<string | null>(null);
   const loading = ref<boolean>(false);
 
-//AdminUsername 1
+  //AdminUsername 1
   const login = async (username: string, pass: string): Promise<void> => {
-   
- 
     loading.value = true;
     error.value = null;
 
     try {
-
-        const res = await fetch("/api/v1/auth/login", {
+      const res = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password: pass }),
       });
 
-      console.log(await res.json())
+      const body = await res.json();
+      console.log(body);
 
       if (!res.ok) throw new Error("Invalid credentials");
 
-      router.push('/dashboard')
+      currentUser.value = body;
 
-
+      router.push("/dashboard");
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -35,5 +36,5 @@ export function useAuth() {
     }
   };
 
-  return { login, error, loading };
-}
+  return { login, currentUser, error, loading };
+};
