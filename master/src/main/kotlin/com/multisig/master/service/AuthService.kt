@@ -27,9 +27,9 @@ class AuthService(
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password")
         }
 
-        // 3. Return user data
         return UserResponse(
-            token = "a",
+            //TODO: This needs redis proxy
+            token = user.id.toString(),
             name = user.name,
             surname = user.surrname,
             username = user.username,

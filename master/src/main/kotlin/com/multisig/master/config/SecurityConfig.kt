@@ -41,8 +41,8 @@ class SecurityConfig {
             .cors { it.configurationSource(corsConfigurationSource()) }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
-                auth
-                    .requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated()
+                auth.anyRequest().permitAll()
+                    // .requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated()
             }
 
         return http.build()

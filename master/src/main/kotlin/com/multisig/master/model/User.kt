@@ -2,7 +2,9 @@ package com.multisig.master.model
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.JdbcType
 import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.dialect.type.PostgreSQLEnumJdbcType
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -38,7 +40,8 @@ class User(
     var passwordHash: String = "",
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType::class)
+    @Column(columnDefinition = "role", nullable = false)
     var role: Role = Role.ACCOUNTANT
 ) {
     constructor() : this(id = null)

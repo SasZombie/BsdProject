@@ -9,11 +9,7 @@ export function useAuth() {
 //AdminUsername 1
   const login = async (username: string, pass: string): Promise<void> => {
    
-    if(username === null && pass === null)
-    {
-        username = "AdminUsername";
-        pass = "1";
-    }
+ 
     loading.value = true;
     error.value = null;
 
