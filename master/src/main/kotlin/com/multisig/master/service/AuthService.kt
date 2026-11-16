@@ -1,12 +1,9 @@
 package com.multisig.master.service
 
 import com.multisig.master.dto.UserLogInRequest
-import com.multisig.master.dto.UserResponse
-import com.multisig.master.model.Role
+import com.multisig.master.dto.UserLogInResponse
 import com.multisig.master.repository.UserRepository
 import org.springframework.http.HttpStatus
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 
@@ -15,7 +12,7 @@ class AuthService(
     private val userRepository: UserRepository
 ) {
 
-    fun login(request: UserLogInRequest): UserResponse {
+    fun login(request: UserLogInRequest): UserLogInResponse {
         
         print(request)
         val user = userRepository.findByUsername(request.username)
@@ -27,12 +24,9 @@ class AuthService(
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password")
         }
 
-        return UserResponse(
+        return UserLogInResponse(
             //TODO: This needs redis proxy
             token = user.id.toString(),
-            name = user.name,
-            surname = user.surrname,
-            username = user.username,
             role = user.role
         )
     }

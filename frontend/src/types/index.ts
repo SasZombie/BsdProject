@@ -10,8 +10,15 @@ export type Role =
 
 export interface User{
     token: string,
-    name: string,
-    surrname: string,
-    username: string,
     role: Role
+}
+
+export interface BackEndUser
+{
+    id: string,
+    name: string,
+    surname: string,
+    username: string,
+    reportsTo: string,
+    role: Role,
 }

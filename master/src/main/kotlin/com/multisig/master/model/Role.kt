@@ -1,11 +1,11 @@
 package com.multisig.master.model
 
 enum class Role {
-    EMPLOYEE,
     ADMIN,
+    EMPLOYEE,
+    ACCOUNTANT,
     MANAGER,
-    CEO,
     CFO,
-    BOARD_DIRECTOR,
-    ACCOUNTANT
+    CEO,
+    BOARD_DIRECTOR
 }

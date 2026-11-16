@@ -2,18 +2,13 @@ package com.multisig.master.service
 
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
-import com.multisig.master.dto.UserCreateRequest
-import com.multisig.master.dto.UserLogInRequest
-import com.multisig.master.dto.UserResponse
 import com.multisig.master.model.Expense
 import com.multisig.master.model.Status
-import com.multisig.master.model.User
 import com.multisig.master.repository.RequestsRepository
 import com.multisig.master.repository.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.time.Clock
 
 @Service
 class RequestService(private val requestsRepo: RequestsRepository, private val userRepo: UserRepository) {
@@ -34,6 +29,26 @@ class RequestService(private val requestsRepo: RequestsRepository, private val u
         )
         return requestsRepo.save(newExpense).toResponse()
     }
+    
+    private fun decideApprovals(expense: Expense) 
+    {
+        if(expense.ammountDollars > 100_000_00)
+        {
+            //CEO + CFO
+        }else if(expense.ammountDollars >= 10_000_00)
+        {
+            //2 Managers + CFO
+            
+        }else if(expense.ammountDollars >= 5_000_00)
+        {
+            //2 Managers
+        }else
+        {
+            //1 Manager
+        }
+        
+    }
+    
 // @Transactional
 // fun createUser(request: UserCreateRequest): UserResponse {
 //     if (userRepository.existsByUsername(request.username)) {

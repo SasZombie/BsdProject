@@ -22,7 +22,7 @@ class User(
     var name: String = "",
 
     @Column(nullable = false)
-    var surrname: String = "",
+    var surname: String = "",
 
     @Column(nullable = false)
     var username: String = "",
@@ -38,7 +38,11 @@ class User(
 
     @Column(nullable = false)
     var passwordHash: String = "",
-
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reports_to_id")
+    var reportsTo: User? = null,
+    
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType::class)
     @Column(columnDefinition = "role", nullable = false)
