@@ -11,7 +11,7 @@ import UserRowForm from '../components/UserRowForm.vue'
 const reason = ref('I want money cuz I can')
 const ammountDollars = ref(67)
 
-const { postExpense, error, loading } = useRequests()
+const { postExpense, getExpense, error, loading } = useRequests()
 const { currentUser } = useAuth()
 
 console.log(currentUser.value)
@@ -26,6 +26,7 @@ onMounted(() => {
     });
 
     getAllUsers(currentUser.value!)
+    getExpense(currentUser.value!.token)
 })
 
 

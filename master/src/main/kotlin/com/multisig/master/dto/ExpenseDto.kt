@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import java.math.BigInteger
+import java.time.Instant
 
 data class ExpenseCreateRequest(
     
@@ -22,6 +24,12 @@ data class ExpenseCreateRequest(
     val reason: String
 )
 
+data class ExpensesGetRequest(
+    @field:NotNull(message = "Cannot have blank Id")
+    val userId: Long
+)
+
+
 data class ExpenseCreateResponse(
     val message: String,
     val approvalsNeededCount: Int
@@ -29,8 +37,11 @@ data class ExpenseCreateResponse(
 
 //Do I want to delete a request?? Maybe
 data class UserExpenseResponse(
-    val name: String,
-    val status: Status
+    val reason: String,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val status: Status,
+    val ammountOfDollars: Long
 )
 
 data class ExpnseResponse(

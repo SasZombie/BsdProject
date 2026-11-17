@@ -2,6 +2,8 @@ package com.multisig.master.service
 
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
+import com.multisig.master.dto.ExpensesGetRequest
+import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.model.Expense
 import com.multisig.master.model.ExpenseDecisions
 import com.multisig.master.model.Role
@@ -10,6 +12,7 @@ import com.multisig.master.model.User
 import com.multisig.master.repository.RequestsDecisionRepository
 import com.multisig.master.repository.RequestsRepository
 import com.multisig.master.repository.UserRepository
+import jakarta.transaction.TransactionScoped
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,6 +25,12 @@ class RequestService(
     private val reqDecisionRepo: RequestsDecisionRepository,
     private val userRepo: UserRepository
 ) {
+
+    @Transactional(readOnly = true)
+    fun getAllExpenses(id: String): List<UserExpenseResponse> {
+        val array = requestsRepo.findAllByUserId(id.toLong())
+        return array.toResponse()
+    }
 
     @Transactional
     fun create(request: ExpenseCreateRequest): ExpenseCreateResponse {
@@ -119,10 +128,19 @@ class RequestService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "$username not found") }
 
     // ExpenseCreateResponse
-//TODO: Update this to reflect approvals neededs
+    //TODO: Update this to reflect approvals neededs
     @Suppress("UnusedReceiverParameter")
     private fun Expense.toResponse() = ExpenseCreateResponse(
         message = "Created!",
         approvalsNeededCount = 2
     )
+    
+    
+    private fun List<Expense>.toResponse(): List<UserExpenseResponse> = this.map { UserExpenseResponse(
+        reason = it.reason ?: "",
+        createdAt = it.createdAt!!,
+        updatedAt = it.updatedAt!!,
+        status = it.status ,
+        ammountOfDollars = it.ammountDollars
+    ) }
 }

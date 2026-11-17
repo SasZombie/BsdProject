@@ -8,3 +8,7 @@ import java.util.Optional
 
 @Repository
 interface RequestsRepository : JpaRepository<Expense, Long> 
+{
+ 
+    fun findAllByUserId(userId: Long): List<Expense>
+}

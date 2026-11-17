@@ -22,10 +22,6 @@ export function useRequests() {
         console.log(body)
 
       if (!res.ok) throw new Error("Invalid credentials");
-
-    //   router.push('/dashboard')
-
-
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -33,5 +29,30 @@ export function useRequests() {
     }
   };
 
-  return { postExpense, error, loading };
+  const getExpense = async (token: string): Promise<void> => {
+    
+    loading.value = true;
+    error.value = null;
+
+    console.log(token)
+    try {
+
+        const res = await fetch("/api/v1/requests/expense/all", {
+        method: "GET",
+        headers: { "Content-Type": "application/json",  Authorization: `Bearer ${token}` },
+      });
+
+        const body = await res.json()
+        console.log(body)
+
+      if (!res.ok) throw new Error("Invalid credentials");
+    } catch (e: any) {
+      error.value = e.message;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+
+  return { postExpense, error, loading, getExpense };
 }
