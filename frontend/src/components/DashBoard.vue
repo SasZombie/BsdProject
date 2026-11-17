@@ -34,7 +34,7 @@ onMounted(() => {
 <template>
 
 
-    <form @submit.prevent="postExpense(ammountDollars, reason, '1')">
+    <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!.token)">
         <input v-model="reason" type="text" placeholder="reason" />
         <input v-model="ammountDollars" type="text" placeholder="ammount" />
         <button :disabled="loading" type="submit">Submit Request</button>
@@ -48,7 +48,14 @@ onMounted(() => {
             <input v-model="name" type="text" placeholder="Name" />
             <input v-model="surname" type="text" placeholder="Surname" />
             <input v-model="username" type="text" placeholder="Username" />
-            <input v-model="reportsTo" type="text" placeholder="ReportsTo" />
+            <select v-model="reportsTo">
+                <option :value="null">None</option>
+                <option v-for="manager in allUsers" :key="manager.id" :value="manager.username">
+                            {{ manager.name }} {{ manager.surname }} ({{ manager.username }})
+
+                </option>
+            </select>
+
             <input v-model="password" type="password" placeholder="Password" />
 
             <select v-model="selectedRole">
@@ -62,7 +69,8 @@ onMounted(() => {
         </form>
 
         <div v-if="allUsers && allUsers.length > 0">
-            <UserRowForm v-for="user in allUsers" :key="user.id" :user="user" :roles="roles" @update="updateUser(currentUser!!, $event)" />
+            <UserRowForm v-for="user in allUsers" :key="user.id" :user="user" :roles="roles" :all-users="allUsers"
+                @update="updateUser(currentUser!, $event)" />
             <p v-if="errorUpdate">{{ errorUpdate }}</p>
         </div>
         <p v-else-if="loading">Loading...</p>

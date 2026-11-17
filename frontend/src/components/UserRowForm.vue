@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { Role, BackEndUser } from '../types'
 
 const props = defineProps<{
   user: BackEndUser
   roles: Role[]
+  allUsers: BackEndUser[]
 }>()
 
 const emit = defineEmits<{
@@ -13,9 +14,17 @@ const emit = defineEmits<{
 
 const form = ref<BackEndUser>({ ...props.user })
 
-watch(() => props.user, (newUser) => {
-  form.value = { ...newUser }
-}, { deep: true })
+watch(
+  () => props.user,
+  (newUser) => {
+    form.value = { ...newUser }
+  },
+  { deep: true }
+)
+
+const availableManagers = computed(() => {
+  return props.allUsers.filter((u) => u.id !== props.user.id)
+})
 
 const submitForm = () => {
   emit('update', form.value)
@@ -24,9 +33,18 @@ const submitForm = () => {
 
 <template>
   <form @submit.prevent="submitForm">
-    <p> {{form.name}}  {{form.surname}} {{form.username}}
+    <span>{{ form.name }} {{ form.surname }} ({{ form.username }})</span>
 
-    <input v-model="form.reportsTo" type="text" placeholder="Reports To" />
+    <select v-model="form.reportsTo">
+      <option :value="null">None</option>
+      <option 
+        v-for="manager in availableManagers" 
+        :key="manager.id" 
+        :value="manager.username"
+      >
+        {{ manager.name }} {{ manager.surname }} ({{ manager.username }})
+      </option>
+    </select>
 
     <select v-model="form.role">
       <option v-for="role in roles" :key="role" :value="role">
@@ -35,6 +53,5 @@ const submitForm = () => {
     </select>
 
     <button type="submit">Update User</button>
-  </p>
   </form>
 </template>

@@ -9,7 +9,7 @@ export const useAdmin = () => {
   const surname = ref("");
   const username = ref("");
   const password = ref("");
-  const reportsTo = ref("");
+  const reportsTo = ref("None");
   const selectedRole = ref<Role>("EMPLOYEE");
 
   const roles: Role[] = [
@@ -78,7 +78,7 @@ export const useAdmin = () => {
     }
     errorCreation.value = null;
 
-    console.log("start");
+    console.log(reportsTo.value);
     try {
       const res = await fetch("/api/v1/users/create", {
         method: "POST",
@@ -87,7 +87,9 @@ export const useAdmin = () => {
           Authorization: `Bearer ${currentUser.token}`,
         },
 
+        
         body: JSON.stringify({
+          token: currentUser.token,
           name: name.value,
           surname: surname.value,
           username: username.value,
@@ -101,6 +103,16 @@ export const useAdmin = () => {
       console.log(body);
 
       if (!res.ok) throw new Error("Erorrr");
+
+      name.value = ""
+      username.value = ""
+      surname.value = ""
+      password.value = ""
+      reportsTo.value = ""
+      selectedRole.value = "EMPLOYEE"
+
+      allUsers.value.push(body)
+
     } catch (e: any) {
       errorCreation.value = e.message;
     }

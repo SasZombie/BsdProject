@@ -3,16 +3,25 @@ package com.multisig.master.service
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.model.Expense
+import com.multisig.master.model.ExpenseDecisions
+import com.multisig.master.model.Role
 import com.multisig.master.model.Status
+import com.multisig.master.model.User
+import com.multisig.master.repository.RequestsDecisionRepository
 import com.multisig.master.repository.RequestsRepository
 import com.multisig.master.repository.UserRepository
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 
 @Service
-class RequestService(private val requestsRepo: RequestsRepository, private val userRepo: UserRepository) {
-
+class RequestService(
+    private val requestsRepo: RequestsRepository,
+    private val reqDecisionRepo: RequestsDecisionRepository,
+    private val userRepo: UserRepository
+) {
 
     @Transactional
     fun create(request: ExpenseCreateRequest): ExpenseCreateResponse {
@@ -27,59 +36,90 @@ class RequestService(private val requestsRepo: RequestsRepository, private val u
             reason = request.reason,
             status = Status.PENDING
         )
-        return requestsRepo.save(newExpense).toResponse()
+        val request = requestsRepo.save(newExpense).toResponse()
+        decideApprovals(newExpense)
+        return request
     }
-    
-    private fun decideApprovals(expense: Expense) 
-    {
-        if(expense.ammountDollars > 100_000_00)
-        {
-            //CEO + CFO
-        }else if(expense.ammountDollars >= 10_000_00)
-        {
-            //2 Managers + CFO
-            
-        }else if(expense.ammountDollars >= 5_000_00)
-        {
-            //2 Managers
-        }else
-        {
-            //1 Manager
+
+    @Transactional
+    private fun decideApprovals(expense: Expense) {
+
+        val dollars = expense.ammountDollars
+        val ceo = getUserByUsername("CEO")
+        val cfo = getUserByUsername("CFO")
+        val boardDir = getUserByUsername("BORDIR")
+
+        val usersThatMustApprove = when (expense.user!!.role) {
+
+            Role.CEO -> {
+                listOf(cfo, boardDir)
+
+            }
+
+            Role.CFO -> {
+                listOf(ceo, boardDir)
+
+            }
+
+            Role.BOARD_DIRECTOR -> {
+
+                listOf(ceo, cfo)
+            }
+
+            else -> {
+
+                when {
+                    dollars > 100_000_00 -> {
+                        listOf(
+                            ceo, cfo
+                        )
+                    }
+
+                    dollars > 10_000_00 -> {
+
+                        val manager1 = expense.user?.reportsTo ?: ceo
+                        val manager2 = expense.user?.reportsTo?.reportsTo ?: boardDir
+
+                        listOf(cfo, manager1, manager2).distinct()
+                    }
+
+                    dollars > 5_000_00 -> {
+
+                        val manager1 = expense.user?.reportsTo ?: ceo
+                        val manager2 = expense.user?.reportsTo?.reportsTo ?: cfo
+
+                        listOf(manager1, manager2)
+                    }
+
+                    else -> {
+                        println("AIci se executa!")
+                        val manager1 = expense.user?.reportsTo ?: cfo
+                        println(expense.user?.surname)
+                        println(expense.user?.reportsTo?.surname)
+
+                        listOf(manager1)
+                    }
+                }
+            }
         }
-        
+
+        for (userThatMustApprove in usersThatMustApprove) {
+            val newDecision = ExpenseDecisions(
+                user = userThatMustApprove,
+                expense = expense
+            )
+            reqDecisionRepo.save(newDecision)
+        }
+
     }
-    
-// @Transactional
-// fun createUser(request: UserCreateRequest): UserResponse {
-//     if (userRepository.existsByUsername(request.username)) {
-//         throw Exception("Username ${request.username} already in use")
-//     }
 
-//     val newUser = User(
-//         name = request.name,
-//         surrname = request.surrname,
-//         username = request.username,
-//         passwordHash = hashPassword(request.password),
-//         createdAt = Instant.now(),
-//         updatedAt = Instant.now(),
-//         role = request.role
-//     )
 
-//     return userRepository.save(newUser).toResponse()
-// }
-
-// private fun hashPassword(password: String): String = password
-
-    // private fun User.toResponse() = (
-    //     token = this.id.toString(),
-    //     name = this.name,
-    //     surname = this.surrname,
-    //     username = this.username,
-    //     role = this.role
-    // )
+    private fun getUserByUsername(username: String): User =
+        userRepo.findByUsername(username)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "$username not found") }
 
     // ExpenseCreateResponse
-    //TODO: Update this to reflect approvals neededs
+//TODO: Update this to reflect approvals neededs
     @Suppress("UnusedReceiverParameter")
     private fun Expense.toResponse() = ExpenseCreateResponse(
         message = "Created!",

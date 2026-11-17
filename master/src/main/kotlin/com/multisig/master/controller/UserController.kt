@@ -41,7 +41,7 @@ class UserController(private val userService: UserService) {
     }
 
     @PostMapping("/create")
-    fun createUser(@Valid @RequestBody request: UserCreateRequest): ResponseEntity<UserLogInResponse> {
+    fun createUser(@Valid @RequestBody request: UserCreateRequest): ResponseEntity<UserBackednResponse> {
         val created = userService.createUser(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }

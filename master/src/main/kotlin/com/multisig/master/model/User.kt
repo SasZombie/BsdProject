@@ -13,40 +13,40 @@ import java.time.Instant
 
 @Entity
 @Table(name = "users")
-class User(
+open class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    open var id: Long? = null,
 
     @Column(nullable = false)
-    var name: String = "",
+    open var name: String = "",
 
     @Column(nullable = false)
-    var surname: String = "",
+    open var surname: String = "",
 
     @Column(nullable = false)
-    var username: String = "",
+    open var username: String = "",
 
     //Instant = UTC time stamp
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    var createdAt: Instant? = null,
+    open var createdAt: Instant? = null,
 
     @UpdateTimestamp
     @Column(nullable = false)
-    var updatedAt: Instant? = null,
+    open var updatedAt: Instant? = null,
 
     @Column(nullable = false)
-    var passwordHash: String = "",
+    open var passwordHash: String = "",
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reports_to_id")
-    var reportsTo: User? = null,
+    open var reportsTo: User? = null,
     
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType::class)
     @Column(columnDefinition = "role", nullable = false)
-    var role: Role = Role.ACCOUNTANT
+    open var role: Role = Role.ACCOUNTANT
 ) {
     constructor() : this(id = null)
 

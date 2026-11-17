@@ -3,33 +3,40 @@ package com.multisig.master.dto
 import com.multisig.master.model.Role
 import com.sun.org.apache.xpath.internal.operations.Bool
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class UserCreateRequest(
-    @field:NotBlank(message = "Creator cannot be blank")
+    @field:NotBlank(message = "Token cannot be blank")
     val token: String,
-    
+
     @field:NotBlank(message = "Name cannot be blank")
     val name: String,
 
-    @field:NotBlank(message = "Surrnae cannot be blank")
+    @field:NotBlank(message = "Surname cannot be blank")
     val surname: String,
-    
+
     @field:NotBlank(message = "Username cannot be blank")
     val username: String,
-    
-    @field:Size(min = 8, message = "Password must be at least 8 characters")
+
+    @field:NotNull(message = "Password is required")
+    //This is nice to have in prod
+    //But this is annoying asf on dev server so I will leave it
+    //Commented
+    // @field:Size(min = 8, message = "Password must be at least 8 characters")
     val password: String,
-    
-    @field:NotBlank(message = "Password must be at least 8 characters")
-    val role: Role
+
+    val reportsTo: String? = null, 
+
+    @field:NotNull(message = "Role is required")
+    val role: Role 
 )
 
 data class UserLogInRequest(
     @field:NotBlank(message = "Username cannot be blank")
     val username: String,
     
-    @field:Size(min = 8, message = "Password must be at least 8 characters")
+    @field:NotBlank(message = "Password cannot be blank")
     val password: String,
 )
 

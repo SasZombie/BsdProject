@@ -9,6 +9,7 @@ export function useRequests() {
     loading.value = true;
     error.value = null;
 
+    console.log(token)
     try {
 
         const res = await fetch("/api/v1/requests/expense/create", {

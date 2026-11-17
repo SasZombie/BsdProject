@@ -6,9 +6,12 @@ import com.multisig.master.dto.UserLogInResponse
 import com.multisig.master.dto.UserUpdateRequest
 import com.multisig.master.model.User
 import com.multisig.master.repository.UserRepository
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
+import kotlin.jvm.optionals.getOrElse
 
 @Service
 class UserService(private val userRepository: UserRepository) {
@@ -30,16 +33,14 @@ class UserService(private val userRepository: UserRepository) {
         val user = userRepository.findById(userToBeUpdated)
             .orElseThrow { NoSuchElementException("User not found with id: $userToBeUpdated") }
 
-        newFields.role?.let { user.role = it }     
+        newFields.role?.let { user.role = it }
         if (newFields.reportsTo != null) {
-            println("HEre")
-            println("HEre")
-            println("HEre")
-            println("HEre")
             val reportsToNew = userRepository.findByUsername(newFields.reportsTo)
                 .orElseThrow { NoSuchElementException("User to report not found with username: ${newFields.reportsTo}") }
-            
+
             user.reportsTo = reportsToNew
+        } else {
+            user.reportsTo = null
         }
 
         return user.toBackendResponse()
@@ -52,9 +53,14 @@ class UserService(private val userRepository: UserRepository) {
 
 
     @Transactional
-    fun createUser(request: UserCreateRequest): UserLogInResponse {
+    fun createUser(request: UserCreateRequest): UserBackednResponse {
         if (userRepository.existsByUsername(request.username)) {
-            throw Exception("Username ${request.username} already in use")
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Username ${request.username} already in use")
+        }
+
+        val manager = request.reportsTo?.let { username ->
+            userRepository.findByUsername(username)
+                .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Reports to user '$username' not found") }
         }
 
         val newUser = User(
@@ -62,12 +68,11 @@ class UserService(private val userRepository: UserRepository) {
             surname = request.surname,
             username = request.username,
             passwordHash = hashPassword(request.password),
-            createdAt = Instant.now(),
-            updatedAt = Instant.now(),
+            reportsTo = manager,
             role = request.role
         )
 
-        return userRepository.save(newUser).toResponse()
+        return userRepository.save(newUser).toBackendResponse()
     }
 
     private fun hashPassword(password: String): String = password
