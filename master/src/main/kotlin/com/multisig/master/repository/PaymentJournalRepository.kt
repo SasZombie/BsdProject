@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface PaymentJournalRepository : JpaRepository<PaymentJournal, Long> {
-    // Finds tasks that died mid-flight
-    fun findByStageIn(stages: List<JournalStage>): List<PaymentJournal>
+    fun findAllByStage(stage: JournalStage): List<PaymentJournal>
+    
+    
 }

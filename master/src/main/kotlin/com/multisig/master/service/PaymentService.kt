@@ -1,18 +1,18 @@
 package com.multisig.master.service
 
 import com.multisig.master.event.ExpenseApprovedEvent
-import com.multisig.master.model.Expense
 import com.multisig.master.model.JournalStage
 import com.multisig.master.model.PaymentJournal
-import com.multisig.master.model.Status
 import com.multisig.master.repository.PaymentJournalRepository
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
+import java.util.concurrent.atomic.AtomicBoolean
 
 
-@Service
-class PaymentWorkflowService(private val journalRepo: PaymentJournalRepository) {
+@Component
+class PaymentJournalService(private val journalRepo: PaymentJournalRepository) {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun recordStart(expenseId: Long): Long {
@@ -31,8 +31,40 @@ class PaymentWorkflowService(private val journalRepo: PaymentJournalRepository) 
         entry.stage = JournalStage.DONE
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun markFailed(journalId: Long) {
+        val entry = journalRepo.findById(journalId).orElseThrow()
+        entry.stage = JournalStage.FAILED
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllNotDone(): List<PaymentJournal> {
+        return journalRepo.findAllByStage(JournalStage.STARTED)
+    }
+
+}
+
+@Service
+class PaymentService(private val journalService: PaymentJournalService) {
+
+    private val isEnabled = AtomicBoolean(true)
+    fun toggleService(enabled: Boolean) {
+        isEnabled.set(enabled)
+    }
+
+    fun isServiceEnabled(): Boolean = isEnabled.get()
+
+    private fun checkServiceStatus() {
+        if (!isEnabled.get()) {
+            throw RuntimeException("Payment service is temporarily disabled.")
+        }
+    }
+
     fun executeSafePayment(event: ExpenseApprovedEvent) {
-        val journalId = recordStart(event.expenseId)
+
+        checkServiceStatus()
+
+        val journalId = journalService.recordStart(event.expenseId)
 
         try {
             println(
@@ -42,16 +74,32 @@ class PaymentWorkflowService(private val journalRepo: PaymentJournalRepository) 
                         " and each user to have balance and so on, that, in my opinon, does not add anything " +
                         "meaningful to the scope of the project"
             )
-            recordDone(journalId)
+            journalService.recordDone(journalId)
         } catch (ex: Exception) {
-            markFailed(journalId)
+            journalService.markFailed(journalId)
             throw ex
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun markFailed(journalId: Long) {
-        val entry = journalRepo.findById(journalId).orElseThrow()
-        entry.stage = JournalStage.FAILED
+    fun redoIfNeeded() {
+        checkServiceStatus()
+
+        val allNotDone = journalService.getAllNotDone()
+
+        for (stage in allNotDone) {
+            //Check payment provider
+            //If we made the payment
+            @Suppress("ConstantConditionIf")
+            if (true) {
+                journalService.recordDone(stage.id)
+            } else {
+                try {
+                    journalService.recordDone(stage.id)
+                } catch (ex: Exception) {
+                    journalService.markFailed(stage.id)
+                    throw ex
+                }
+            }
+        }
     }
 }
