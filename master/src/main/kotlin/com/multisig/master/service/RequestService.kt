@@ -1,9 +1,12 @@
 package com.multisig.master.service
 
+import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.dto.ExpensesGetRequest
 import com.multisig.master.dto.UserExpenseResponse
+import com.multisig.master.dto.UserExpenseResponseWithDecision
+import com.multisig.master.event.ExpenseApprovedEvent
 import com.multisig.master.model.Expense
 import com.multisig.master.model.ExpenseDecisions
 import com.multisig.master.model.Role
@@ -13,6 +16,7 @@ import com.multisig.master.repository.RequestsDecisionRepository
 import com.multisig.master.repository.RequestsRepository
 import com.multisig.master.repository.UserRepository
 import jakarta.transaction.TransactionScoped
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,13 +27,83 @@ import java.time.Instant
 class RequestService(
     private val requestsRepo: RequestsRepository,
     private val reqDecisionRepo: RequestsDecisionRepository,
-    private val userRepo: UserRepository
+    private val userRepo: UserRepository,
+    private val eventPublisher: ApplicationEventPublisher
 ) {
 
     @Transactional(readOnly = true)
     fun getAllExpenses(id: String): List<UserExpenseResponse> {
         val array = requestsRepo.findAllByUserId(id.toLong())
         return array.toResponse()
+    }
+
+    @Transactional(readOnly = true)
+    fun getExpensesToDecide(id: String): List<UserExpenseResponse> {
+        val array = requestsRepo.findPendingExpensesByUserId(id.toLong())
+        return array.toResponse()
+    }
+
+    @Transactional
+    fun applyDecision(id: String, request: DecideExpense): UserExpenseResponseWithDecision {
+
+        if (request.decision == Status.PENDING) {
+            throw ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Cannot change status to PENDING"
+            )
+        }
+
+        val decisionQuerry = reqDecisionRepo.findByUserIdAndExpenseId(id.toLong(), request.expenseId)
+            ?: throw ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Combination $id and ${request.expenseId} not found"
+            )
+
+        if (decisionQuerry.decision != Status.PENDING) {
+            throw ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Only pending decisions can be changed"
+            )
+        }
+        decisionQuerry.decision = request.decision
+        if (request.comment != null) {
+            decisionQuerry.comment = request.comment
+        }
+
+        val initialReq =  requestsRepo.findById(request.expenseId).orElseThrow {
+            throw ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "ExpenseId not found"
+            )
+        }
+        //If not approved deny the whole request
+        if (request.decision != Status.APPROVED) {
+            
+            initialReq.status = request.decision
+        }else 
+        {
+            //If approved, see if everyone approved
+            val allWhoNeedToApprove = reqDecisionRepo.findAllByExpenseIdAndIdNot(request.expenseId, decisionQuerry.id!!)
+            
+            if(allWhoNeedToApprove.all { it.decision == Status.APPROVED })
+            {
+                initialReq.status = Status.APPROVED
+            }
+        }
+        
+        val returned = UserExpenseResponseWithDecision(
+            id = initialReq.id!!,
+            reason = initialReq.reason!!,
+            createdAt = initialReq.createdAt!!,
+            updatedAt = Instant.now(),
+            status = initialReq.status,
+            personalDecision = request.decision,
+            ammountOfDollars = initialReq.ammountDollars
+        )
+        
+        eventPublisher.publishEvent(
+            ExpenseApprovedEvent(initialReq.id!!, initialReq.ammountDollars))
+        return returned
     }
 
     @Transactional
@@ -134,13 +208,16 @@ class RequestService(
         message = "Created!",
         approvalsNeededCount = 2
     )
-    
-    
-    private fun List<Expense>.toResponse(): List<UserExpenseResponse> = this.map { UserExpenseResponse(
-        reason = it.reason ?: "",
-        createdAt = it.createdAt!!,
-        updatedAt = it.updatedAt!!,
-        status = it.status ,
-        ammountOfDollars = it.ammountDollars
-    ) }
+
+
+    private fun List<Expense>.toResponse(): List<UserExpenseResponse> = this.map {
+        UserExpenseResponse(
+            id = it.id!!,
+            reason = it.reason ?: "",
+            createdAt = it.createdAt!!,
+            updatedAt = it.updatedAt!!,
+            status = it.status,
+            ammountOfDollars = it.ammountDollars
+        )
+    }
 }

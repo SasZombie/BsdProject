@@ -35,8 +35,15 @@ data class ExpenseCreateResponse(
     val approvalsNeededCount: Int
 )
 
+data class DecideExpense(
+    val expenseId: Long,
+    val decision: Status,
+    val comment: String?
+)
+
 //Do I want to delete a request?? Maybe
 data class UserExpenseResponse(
+    val id: Long,
     val reason: String,
     val createdAt: Instant,
     val updatedAt: Instant,
@@ -44,28 +51,12 @@ data class UserExpenseResponse(
     val ammountOfDollars: Long
 )
 
-data class ExpnseResponse(
+data class UserExpenseResponseWithDecision(
+    val id: Long,
+    val reason: String,
+    val createdAt: Instant,
+    val updatedAt: Instant,
     val status: Status,
-    val comments: Array<String>,
-    val userExpensesReposes: Array<UserExpenseResponse> 
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ExpnseResponse
-
-        if (status != other.status) return false
-        if (!comments.contentEquals(other.comments)) return false
-        if (!userExpensesReposes.contentEquals(other.userExpensesReposes)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = status.hashCode()
-        result = 31 * result + comments.contentHashCode()
-        result = 31 * result + userExpensesReposes.contentHashCode()
-        return result
-    }
-}
+    val personalDecision: Status,
+    val ammountOfDollars: Long
+)

@@ -8,10 +8,11 @@ export type Role =
   | "ACCOUNTANT";
 
 export type Status =
-  |"PENDING"
+  | "PENDING"
   | "APPROVED"
-  | "DENIED"
+  | "REJECTED"
   | "VETOED"
+
 
 export interface User {
   token: string;
@@ -28,6 +29,7 @@ export interface BackEndUser {
 }
 
 export interface Expense {
+  id: number,
   reason: String;
   createdAt: Date;
   updatedAt: Date;

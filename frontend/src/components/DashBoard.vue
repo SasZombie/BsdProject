@@ -8,10 +8,11 @@ import router from '../router'
 
 import UserRowForm from '../components/UserRowForm.vue'
 
+
 const reason = ref('I want money cuz I can')
 const ammountDollars = ref(67)
 
-const { postExpense, getExpense, error, loading } = useRequests()
+const { postExpense, decideExpense, error, loading, getPersonalExpenses, getExpensesToDecide, personalExpenses, expensesToDecide } = useRequests()
 const { currentUser } = useAuth()
 
 console.log(currentUser.value)
@@ -26,7 +27,8 @@ onMounted(() => {
     });
 
     getAllUsers(currentUser.value!)
-    getExpense(currentUser.value!.token)
+    getPersonalExpenses(currentUser.value!.token)
+    getExpensesToDecide(currentUser.value!.token)
 })
 
 
@@ -34,6 +36,7 @@ onMounted(() => {
 
 <template>
 
+    <!-- Expenses -->
 
     <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!.token)">
         <input v-model="reason" type="text" placeholder="reason" />
@@ -41,6 +44,28 @@ onMounted(() => {
         <button :disabled="loading" type="submit">Submit Request</button>
         <p v-if="error">{{ error }}</p>
     </form>
+
+    <div v-if="personalExpenses && personalExpenses.length > 0">
+        <div v-for="value in personalExpenses">
+            <p>{{ value.reason }} {{ value.ammountOfDollars }} </p>
+        </div>
+    </div>
+
+    <p>Expenses to Decide </p>
+    <div v-if="expensesToDecide && expensesToDecide.length > 0">
+        <div v-for="expense in expensesToDecide" :key="expense.id">
+            <p>{{ expense.reason }} ${{ expense.ammountOfDollars }}</p>
+
+            <!-- Pass status directly on button click -->
+            <button type="button" @click="decideExpense(currentUser!.token, expense, 'APPROVED')">
+                Yes (Approve)
+            </button>
+
+            <button type="button" @click="decideExpense(currentUser!.token, expense, 'REJECTED')">
+                No (Reject)
+            </button>
+        </div>
+    </div>
 
     <!-- Admin Options -->
     <div>
@@ -52,7 +77,7 @@ onMounted(() => {
             <select v-model="reportsTo">
                 <option :value="null">None</option>
                 <option v-for="manager in allUsers" :key="manager.id" :value="manager.username">
-                            {{ manager.name }} {{ manager.surname }} ({{ manager.username }})
+                    {{ manager.name }} {{ manager.surname }} ({{ manager.username }})
 
                 </option>
             </select>

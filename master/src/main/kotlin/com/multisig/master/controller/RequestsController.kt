@@ -1,12 +1,13 @@
 package com.multisig.master.controller
 
+import jakarta.validation.Valid
+import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.dto.ExpensesGetRequest
-import com.multisig.master.dto.ExpnseResponse
 import com.multisig.master.dto.UserExpenseResponse
+import com.multisig.master.dto.UserExpenseResponseWithDecision
 import com.multisig.master.service.RequestService
-import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,12 +26,28 @@ class RequestsController(private val requestService: RequestService) {
         val created = requestService.create(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
-
-    @GetMapping("/expense/all")
+    
+    @GetMapping("/expense/personal")
     fun getPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponse>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
         val expenses = requestService.getAllExpenses(token)
         return ResponseEntity.ok(expenses)
+    }
+    
+    @GetMapping("/expense/toDecide")
+    fun getAllPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponse>> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+
+        val expenses = requestService.getExpensesToDecide(token)
+        return ResponseEntity.ok(expenses)
+    }
+    
+    @PostMapping("/expense/decision")
+    fun decideExpense(@RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: DecideExpense): ResponseEntity<UserExpenseResponseWithDecision> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        
+        val created = requestService.applyDecision(token, request)
+        return ResponseEntity.status(HttpStatus.OK).body(created)
     }
 }

@@ -20,9 +20,9 @@ data class UserCreateRequest(
     val username: String,
 
     @field:NotNull(message = "Password is required")
+    //Note!
     //This is nice to have in prod
-    //But this is annoying asf on dev server so I will leave it
-    //Commented
+    //But this is annoying asf on dev server so I will leave it commented
     // @field:Size(min = 8, message = "Password must be at least 8 characters")
     val password: String,
 
