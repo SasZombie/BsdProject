@@ -3,7 +3,6 @@ package com.multisig.master.service
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
-import com.multisig.master.dto.ExpensesGetRequest
 import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseWithDecision
 import com.multisig.master.event.ExpenseApprovedEvent
@@ -12,10 +11,9 @@ import com.multisig.master.model.ExpenseDecisions
 import com.multisig.master.model.Role
 import com.multisig.master.model.Status
 import com.multisig.master.model.User
-import com.multisig.master.repository.RequestsDecisionRepository
-import com.multisig.master.repository.RequestsRepository
+import com.multisig.master.repository.ExpensesDecisionRepository
+import com.multisig.master.repository.ExpenseRepository
 import com.multisig.master.repository.UserRepository
-import jakarta.transaction.TransactionScoped
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -24,9 +22,9 @@ import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 
 @Service
-class RequestService(
-    private val requestsRepo: RequestsRepository,
-    private val reqDecisionRepo: RequestsDecisionRepository,
+class ExpensesService(
+    private val requestsRepo: ExpenseRepository,
+    private val reqDecisionRepo: ExpensesDecisionRepository,
     private val userRepo: UserRepository,
     private val eventPublisher: ApplicationEventPublisher
 ) {
@@ -70,7 +68,7 @@ class RequestService(
             decisionQuerry.comment = request.comment
         }
 
-        val initialReq =  requestsRepo.findById(request.expenseId).orElseThrow {
+        val initialReq = requestsRepo.findById(request.expenseId).orElseThrow {
             throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "ExpenseId not found"
@@ -78,19 +76,21 @@ class RequestService(
         }
         //If not approved deny the whole request
         if (request.decision != Status.APPROVED) {
-            
+
             initialReq.status = request.decision
-        }else 
-        {
+        } else {
             //If approved, see if everyone approved
             val allWhoNeedToApprove = reqDecisionRepo.findAllByExpenseIdAndIdNot(request.expenseId, decisionQuerry.id!!)
-            
-            if(allWhoNeedToApprove.all { it.decision == Status.APPROVED })
-            {
+
+            if (allWhoNeedToApprove.all { it.decision == Status.APPROVED }) {
                 initialReq.status = Status.APPROVED
+
+                eventPublisher.publishEvent(
+                    ExpenseApprovedEvent(initialReq.id!!, initialReq.ammountDollars)
+                )
             }
         }
-        
+
         val returned = UserExpenseResponseWithDecision(
             id = initialReq.id!!,
             reason = initialReq.reason!!,
@@ -100,9 +100,6 @@ class RequestService(
             personalDecision = request.decision,
             ammountOfDollars = initialReq.ammountDollars
         )
-        
-        eventPublisher.publishEvent(
-            ExpenseApprovedEvent(initialReq.id!!, initialReq.ammountDollars))
         return returned
     }
 

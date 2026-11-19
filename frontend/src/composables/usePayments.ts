@@ -1,32 +1,42 @@
 import { ref } from "vue";
-import type { Expense, Status } from "../types";
+import type { Payment, Status } from "../types";
 
-export const useRequests = () => {
+export const usePayments = () => {
   const error = ref<string | null>(null);
   const loading = ref<boolean>(false);
-  const personalExpenses = ref<Expense[]>([]);
-  const expensesToDecide = ref<Expense[]>([]);
+  const personalPayments = ref<Payment[]>([]);
+  const paymentsToDecide = ref<Payment[]>([]);
+  const selectedFile = ref<File | null>(null);
+  const isUploading = ref<boolean>(false);
 
-  const postExpense = async (
-    ammountDollars: number,
-    reason: string,
-    token: string,
-  ): Promise<void> => {
-    loading.value = true;
-    error.value = null;
+  const handleFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+      selectedFile.value = target.files[0];
+    }
+  };
+
+  const postPayment = async (token: string): Promise<void> => {
+    if (!selectedFile.value) {
+      alert("Please select a file first");
+      return;
+    }
+
+    isUploading.value = true;
+
+    const formData = new FormData();
+    formData.append("file", selectedFile.value);
+    formData.append("reason", "Reason e plm");
 
     console.log(token);
     try {
-      const res = await fetch("/api/v1/requests/expense/create", {
+      const res = await fetch("/api/v1/requests/payments/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: token,
-          ammountDollars: ammountDollars,
-          reason: reason,
-        }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
 
+      selectedFile.value = null;
       const body = await res.json();
       console.log(body);
 
@@ -38,7 +48,7 @@ export const useRequests = () => {
     }
   };
 
-  const getPersonalExpenses = async (token: string): Promise<void> => {
+  const getPersonalPayments = async (token: string): Promise<void> => {
     loading.value = true;
     error.value = null;
 
@@ -55,7 +65,7 @@ export const useRequests = () => {
       const body = await res.json();
       console.log(body);
 
-      personalExpenses.value = body;
+      personalPayments.value = body;
 
       if (!res.ok) throw new Error("Invalid credentials");
     } catch (e: any) {
@@ -65,7 +75,7 @@ export const useRequests = () => {
     }
   };
 
-  const getExpensesToDecide = async (token: string): Promise<void> => {
+  const getPaymentsToDecide = async (token: string): Promise<void> => {
     loading.value = true;
     error.value = null;
 
@@ -81,7 +91,7 @@ export const useRequests = () => {
 
       const body = await res.json();
       console.log(body);
-      expensesToDecide.value = body;
+      paymentsToDecide.value = body;
 
       if (!res.ok) throw new Error("Invalid credentials");
     } catch (e: any) {
@@ -91,9 +101,9 @@ export const useRequests = () => {
     }
   };
 
-  const decideExpense = async (
+  const decidePayment = async (
     token: string,
-    exp: Expense,
+    exp: Payment,
     decision: Status,
   ): Promise<void> => {
     console.log(token);
@@ -124,13 +134,16 @@ export const useRequests = () => {
   };
 
   return {
-    postExpense,
+    postPayment,
     error,
-    decideExpense,
+    decidePayment,
     loading,
-    getPersonalExpenses,
-    getExpensesToDecide,
-    personalExpenses,
-    expensesToDecide,
+    getPersonalPayments,
+    getPaymentsToDecide,
+    handleFileChange,
+    isUploading,
+    selectedFile,
+    personalPayments,
+    paymentsToDecide,
   };
 };

@@ -41,7 +41,6 @@ class PaymentJournalService(private val journalRepo: PaymentJournalRepository) {
     fun getAllNotDone(): List<PaymentJournal> {
         return journalRepo.findAllByStage(JournalStage.STARTED)
     }
-
 }
 
 @Service
@@ -94,6 +93,7 @@ class PaymentService(private val journalService: PaymentJournalService) {
                 journalService.recordDone(stage.id)
             } else {
                 try {
+                    
                     journalService.recordDone(stage.id)
                 } catch (ex: Exception) {
                     journalService.markFailed(stage.id)

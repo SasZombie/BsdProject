@@ -36,3 +36,13 @@ export interface Expense {
   status: Status;
   ammountOfDollars: number;
 }
+
+
+export interface Payment {
+  id: number,
+  reason: String;
+  createdAt: Date;
+  updatedAt: Date;
+  status: Status;
+  file: File
+}

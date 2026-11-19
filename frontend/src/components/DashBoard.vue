@@ -1,7 +1,8 @@
 <script setup lang="ts">
 
 import { onMounted, ref } from 'vue'
-import { useRequests } from '../composables/useRequests'
+import { useExpenses } from '../composables/useExpenses.ts'
+import { usePayments } from '../composables/usePayments.ts'
 import { useAuth } from '../composables/useAuth'
 import { useAdmin } from '../composables/useAdmin'
 import router from '../router'
@@ -12,7 +13,8 @@ import UserRowForm from '../components/UserRowForm.vue'
 const reason = ref('I want money cuz I can')
 const ammountDollars = ref(67)
 
-const { postExpense, decideExpense, error, loading, getPersonalExpenses, getExpensesToDecide, personalExpenses, expensesToDecide } = useRequests()
+const { postExpense, decideExpense, error, loading, getPersonalExpenses, getExpensesToDecide, personalExpenses, expensesToDecide } = useExpenses()
+const { postPayment, handleFileChange, isUploading, selectedFile, decidePayment, getPersonalPayments, getPaymentsToDecide, personalPayments, paymentsToDecide } = usePayments()
 const { currentUser } = useAuth()
 
 console.log(currentUser.value)
@@ -56,16 +58,31 @@ onMounted(() => {
         <div v-for="expense in expensesToDecide" :key="expense.id">
             <p>{{ expense.reason }} ${{ expense.ammountOfDollars }}</p>
 
-            <!-- Pass status directly on button click -->
             <button type="button" @click="decideExpense(currentUser!.token, expense, 'APPROVED')">
-                Yes (Approve)
+                Yes
             </button>
 
             <button type="button" @click="decideExpense(currentUser!.token, expense, 'REJECTED')">
-                No (Reject)
+                No
             </button>
         </div>
     </div>
+
+    <!-- Payments -->
+
+
+    <form @submit.prevent="postPayment(currentUser!!.token)">
+
+        <div>
+            <label>Select File:</label>
+            <input type="file" @change="handleFileChange" />
+        </div>
+
+        <button type="submit" :disabled="isUploading || !selectedFile">
+            {{ isUploading ? 'Uploading...' : 'Upload Receipt' }}
+        </button>
+    </form>
+
 
     <!-- Admin Options -->
     <div>
