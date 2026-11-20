@@ -2,6 +2,7 @@ package com.multisig.master.service
 
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateResponse
+import com.multisig.master.dto.PaymentFileDownload
 import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserPaymentFileResponseWithDecision
 import com.multisig.master.dto.UserPaymentFileUploadResponse
@@ -17,16 +18,16 @@ import com.multisig.master.repository.PaymentFileRepository
 import com.multisig.master.repository.UserRepository
 import com.opencsv.CSVReaderHeaderAware
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.Resource
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.WebDataBinder
-import org.springframework.web.bind.annotation.InitBinder
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.server.ResponseStatusException
 import java.io.ByteArrayInputStream
 import java.nio.file.Files
-import java.io.FileReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.file.Path
@@ -54,7 +55,7 @@ class PaymentFileService(
 
     @Transactional(readOnly = true)
     fun getPaymentsToDecide(id: String): List<UserPaymentFileUploadResponse> {
-        val array = paymentFileRepo.findPendingExpensesByUserId(id.toLong())
+        val array = paymentFileRepo.findPendingPaymentFilesByUserId(id.toLong())
         return array.toResponse()
     }
 
@@ -135,11 +136,11 @@ class PaymentFileService(
         return filesFolder + cleanFileName
     }
 
-    fun saveFileAtPath(path: String, file: MultipartFile) {
+    private fun saveFileAtPath(path: String, file: MultipartFile) {
         Files.copy(file.inputStream, Path.of(path))
     }
 
-    fun sha256(inputStream: InputStream): String {
+    private fun sha256(inputStream: InputStream): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val buffer = ByteArray(8192)
 
@@ -150,6 +151,47 @@ class PaymentFileService(
         }
 
         return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getFileToDownload(userId: Long, fileId: Long): PaymentFileDownload {
+        val querry = reqDecisionRepo.findByUserIdAndPaymentFileId(userId, fileId) ?: throw ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "This combination doesnt exist"
+        )
+
+        if (querry.paymentFile == null) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Cannot find this file"
+            )
+        }
+
+        val filePathString = querry.paymentFile!!.filePath
+        val filePath = Paths.get(filePathString)
+
+        val file = filePath.toFile()
+
+        if (!file.exists()) {
+            throw ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Cannot find resource at given path"
+            )
+        }
+
+        val resource = FileSystemResource(file)
+        var contentType = Files.probeContentType(filePath)
+
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE
+        }
+
+        return PaymentFileDownload(
+            contentType,
+            filePathString,
+            file.length(),
+            resource
+        )
     }
 
     @Transactional
@@ -184,7 +226,7 @@ class PaymentFileService(
         return queerry.toResponse()
     }
 
-    fun sumAmount(fileBytes: ByteArray): Long =
+    private fun sumAmount(fileBytes: ByteArray): Long =
         InputStreamReader(ByteArrayInputStream(fileBytes)).use { reader ->
             CSVReaderHeaderAware(reader).use { csv ->
                 generateSequence { csv.readMap() }

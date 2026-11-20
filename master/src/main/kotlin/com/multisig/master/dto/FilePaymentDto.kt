@@ -3,6 +3,7 @@ package com.multisig.master.dto
 import com.multisig.master.model.Status
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
+import org.springframework.core.io.FileSystemResource
 import org.springframework.web.multipart.MultipartFile
 import java.time.Instant
 
@@ -40,4 +41,11 @@ data class UserPaymentFileResponseWithDecision(
     val updatedAt: Instant,
     val status: Status,
     val personalDecision: Status
+)
+
+data class PaymentFileDownload(
+    val contentType: String,
+    val fileName: String,
+    val fileSize: Long,
+    val resource: FileSystemResource
 )

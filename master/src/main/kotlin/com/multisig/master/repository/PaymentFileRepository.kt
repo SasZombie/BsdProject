@@ -1,6 +1,5 @@
 package com.multisig.master.repository
 
-import com.multisig.master.model.Expense
 import com.multisig.master.model.PaymentFile
 import com.multisig.master.model.Status
 import org.springframework.data.jpa.repository.JpaRepository
@@ -13,10 +12,19 @@ interface PaymentFileRepository : JpaRepository<PaymentFile, Long> {
     fun findAllByUserId(userId: Long): List<PaymentFile>
 
     @Query("""
-        SELECT ed.expense 
-        FROM ExpenseDecisions ed 
-        WHERE ed.user.id = :userId 
-          AND ed.decision = :status
+        SELECT pf.paymentFile 
+        FROM PaymentFileDecisions pf 
+        WHERE pf.user.id = :userId 
+          AND pf.decision = :status
         """)
-    fun findPendingExpensesByUserId(@Param("userId") userId: Long, @Param("status") status: Status = Status.PENDING): List<PaymentFile>
+    fun findPendingPaymentFilesByUserId(@Param("userId") userId: Long, @Param("status") status: Status = Status.PENDING): List<PaymentFile>
+    
+    
+     @Query("""
+        SELECT pf.paymentFile 
+        FROM PaymentFileDecisions pf 
+        WHERE pf.user.id = :userId 
+          AND pf.decision = :status
+        """)
+    fun findPaymentFileByUserIdAndFileId(@Param("userId") userId: Long, @Param("status") status: Status = Status.PENDING): List<PaymentFile>
 }

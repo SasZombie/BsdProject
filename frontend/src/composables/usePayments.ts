@@ -54,7 +54,7 @@ export const usePayments = () => {
 
     console.log(token);
     try {
-      const res = await fetch("/api/v1/requests/expense/personal", {
+      const res = await fetch("/api/v1/requests/payments/personal", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export const usePayments = () => {
 
     console.log(token);
     try {
-      const res = await fetch("/api/v1/requests/expense/toDecide", {
+      const res = await fetch("/api/v1/requests/payments/toDecide", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +90,7 @@ export const usePayments = () => {
       });
 
       const body = await res.json();
-      console.log(body);
+      console.log("Payments to decide: ", body);
       paymentsToDecide.value = body;
 
       if (!res.ok) throw new Error("Invalid credentials");
@@ -103,19 +103,19 @@ export const usePayments = () => {
 
   const decidePayment = async (
     token: string,
-    exp: Payment,
+    pay: Payment,
     decision: Status,
   ): Promise<void> => {
     console.log(token);
     try {
-      const res = await fetch("/api/v1/requests/expense/decision", {
+      const res = await fetch("/api/v1/requests/payments/decision", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          expenseId: exp.id,
+          expenseId: pay.id,
           decision: decision,
           comment: "Bla Bla Bla",
         }),
@@ -126,6 +126,41 @@ export const usePayments = () => {
       // expensesToDecide.value = body;
 
       if (!res.ok) throw new Error("Invalid credentials");
+    } catch (e: any) {
+      error.value = e.message;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const downloadPayment = async (
+    token: string,
+    pay: Payment,
+  ): Promise<void> => {
+    console.log(token);
+    try {
+      const res = await fetch(`/api/v1/requests/payments/download/${pay.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Invalid credentials");
+
+      const blob = await res.blob();
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "resource"; 
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -145,5 +180,6 @@ export const usePayments = () => {
     selectedFile,
     personalPayments,
     paymentsToDecide,
+    downloadPayment,
   };
 };

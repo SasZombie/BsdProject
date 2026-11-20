@@ -14,7 +14,7 @@ const reason = ref('I want money cuz I can')
 const ammountDollars = ref(67)
 
 const { postExpense, decideExpense, error, loading, getPersonalExpenses, getExpensesToDecide, personalExpenses, expensesToDecide } = useExpenses()
-const { postPayment, handleFileChange, isUploading, selectedFile, decidePayment, getPersonalPayments, getPaymentsToDecide, personalPayments, paymentsToDecide } = usePayments()
+const { postPayment, handleFileChange, isUploading, selectedFile, decidePayment, getPersonalPayments, getPaymentsToDecide, personalPayments, downloadPayment, paymentsToDecide } = usePayments()
 const { currentUser } = useAuth()
 
 console.log(currentUser.value)
@@ -22,15 +22,18 @@ console.log(currentUser.value)
 const { name, errorCreation, surname, username, password, selectedRole, reportsTo, roles, addUser, allUsers, getAllUsers, errorUpdate, updateUser } = useAdmin();
 
 onMounted(() => {
-    onMounted(() => {
-        if (!currentUser.value) {
-            router.replace('/')
-        }
-    });
+
+    if (!currentUser.value) {
+        router.replace('/')
+    }
+
 
     getAllUsers(currentUser.value!)
     getPersonalExpenses(currentUser.value!.token)
     getExpensesToDecide(currentUser.value!.token)
+    getPaymentsToDecide(currentUser.value!.token)
+
+
 })
 
 
@@ -82,6 +85,30 @@ onMounted(() => {
             {{ isUploading ? 'Uploading...' : 'Upload Receipt' }}
         </button>
     </form>
+
+
+
+
+    <p>Payments to Decide </p>
+    <div v-if="paymentsToDecide && paymentsToDecide.length > 0">
+        <div v-for="payment in paymentsToDecide" :key="payment.id">
+            <p>{{ payment.reason }} ${{ payment.status }}</p>
+
+
+             <button type="button" @click="downloadPayment(currentUser!.token, payment)">
+                Download 
+            </button>
+
+            <button type="button" @click="decidePayment(currentUser!.token, payment, 'APPROVED')">
+                Yes
+            </button>
+
+            <button type="button" @click="decidePayment(currentUser!.token, payment, 'REJECTED')">
+                No
+            </button>
+        </div>
+    </div>
+    
 
 
     <!-- Admin Options -->

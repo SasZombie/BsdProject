@@ -44,5 +44,4 @@ export interface Payment {
   createdAt: Date;
   updatedAt: Date;
   status: Status;
-  file: File
 }
