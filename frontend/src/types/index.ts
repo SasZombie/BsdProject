@@ -45,3 +45,10 @@ export interface Payment {
   updatedAt: Date;
   status: Status;
 }
+
+//Maybe we will need 
+//Extra stuff here
+export interface UserProps {
+  currentUser: User,
+  extraOptions: boolean
+}

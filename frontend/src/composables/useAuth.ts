@@ -2,7 +2,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import type { User } from "../types";
 
-const currentUser = ref<User | null>(null);
+export const currentUser = ref<User | null>(null);
 
 export const useAuth = () => {
   const router = useRouter();
@@ -36,5 +36,5 @@ export const useAuth = () => {
     }
   };
 
-  return { login, currentUser, error, loading };
+  return { login, error, loading };
 };
