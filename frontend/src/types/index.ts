@@ -46,8 +46,12 @@ export interface Payment {
   status: Status;
 }
 
-//Maybe we will need 
-//Extra stuff here
+export interface Tab {
+    id: string,
+    label: string,
+    show: boolean
+}
+
 export interface UserProps {
   currentUser: User,
   extraOptions: boolean

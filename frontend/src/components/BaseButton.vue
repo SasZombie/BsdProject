@@ -1,17 +1,16 @@
 <script setup lang="ts">
 
 defineProps<{
-    text: string
+    text: string,
 }>()
 </script>
 
 <template>
-    <div class="flex flex-col gap-1.5 w-1/2 mx-auto">
         <button :class="[
             'w-full px-3.5 py-2 text-sm rounded-lg transition outline-none cursor-pointer',
             'bg-nuxtBlack placeholder-nuxtGreen/30',
-            'border border-nuxtGreen/30 focus:ring-1 focus:ring-nuxtGreen']">
+            'border border-nuxtGreen/30 hover:bg-nuxtGreen/10 focus:ring-1 focus:ring-nuxtGreen']">
             {{ text }}
         </button>
-    </div>
+
 </template>
