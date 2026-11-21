@@ -34,5 +34,12 @@ export const useAuth = () => {
     }
   };
 
-  return { login, error, loading };
+  const logOut = async () => {
+    //TODO: Api call to backend
+
+
+    router.push("/")
+  }
+
+  return { login, logOut, error, loading };
 };

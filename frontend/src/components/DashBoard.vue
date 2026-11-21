@@ -4,10 +4,11 @@ import Expenses from './Expenses.vue'
 import Payments from './Payments.vue'
 import Admin from './Admin.vue'
 import { useRoles } from '../composables/useRoles.ts'
-import { currentUser } from '../composables/useAuth'
+import { currentUser, useAuth } from '../composables/useAuth'
 import BaseNavigation from './BaseNavigation.vue'
 import type { Tab } from '../types/index.ts'
 import { ref } from 'vue'
+import BaseButton from './BaseButton.vue'
 
 const renderLogic = useRoles(currentUser.value!.role)
 
@@ -33,6 +34,8 @@ const currentTabs: Tab[] = [
 
 const activeTab = ref('expenses')
 
+const { logOut }  = useAuth()
+
 
 </script>
 
@@ -46,22 +49,25 @@ const activeTab = ref('expenses')
         class="pointer-events-none fixed top-0 -right-20 h-full w-72 bg-gradient-to-l from-nuxtGreen/10 to-transparent blur-2xl">
     </div>
 
-    <div class="px-4 py-4">
+    <div class="flex items-center justify-between px-4 py-4">
         <h3 class="text-2xl font-semibold text-white">Dashboard Overview</h3>
+        <BaseButton @click="logOut" text="Log Out"/>
     </div>
+
+
     <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
 
     <div v-if="currentUser" class="w-full space-y-6 px-4 py-5">
 
-        <!-- Expenses -->
         <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
         <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
-
+        
+        <!-- Expenses -->
         <KeepAlive>
             <Expenses v-if="activeTab === 'expenses'" :current-user="currentUser" :extra-options="true" />
         </KeepAlive>
-        <!-- Payments -->
 
+        <!-- Payments -->
         <KeepAlive>
             <Payments v-if="activeTab === 'payments' && renderLogic.renderPayments" :current-user="currentUser!!"
                 :extra-options="true" />

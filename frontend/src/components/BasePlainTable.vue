@@ -61,8 +61,8 @@ const formatCellValue = (val: any): string => {
                     </tr>
 
                     <tr v-if="data.length === 0">
-                        <td class="px-6 py-8 text-center text-slate-500 font-sans">
-                            No data available
+                        <td class="px-6 py-8 text-center text-white">
+                            No personal expenses pending
                         </td>
                     </tr>
                 </tbody>

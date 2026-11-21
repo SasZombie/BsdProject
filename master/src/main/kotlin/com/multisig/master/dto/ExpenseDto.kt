@@ -51,6 +51,11 @@ data class UserExpenseResponse(
     val ammountOfDollars: Long
 )
 
+data class UserExpenseResponseExtened(
+    val expense: UserExpenseResponse,
+    val user: UserBackednResponse
+)
+
 data class UserExpenseResponseWithDecision(
     val id: Long,
     val reason: String,

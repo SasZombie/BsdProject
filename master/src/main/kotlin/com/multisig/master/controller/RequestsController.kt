@@ -6,6 +6,7 @@ import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserExpenseResponse
+import com.multisig.master.dto.UserExpenseResponseExtened
 import com.multisig.master.dto.UserExpenseResponseWithDecision
 import com.multisig.master.dto.UserPaymentFileUploadResponse
 import com.multisig.master.service.ExpensesService
@@ -46,7 +47,7 @@ class RequestsController(
     }
 
     @GetMapping("/expense/toDecide")
-    fun getExpensesToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponse>> {
+    fun getExpensesToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
         val expenses = expensesService.getExpensesToDecide(token)

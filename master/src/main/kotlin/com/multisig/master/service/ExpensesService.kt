@@ -3,7 +3,9 @@ package com.multisig.master.service
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
 import com.multisig.master.dto.ExpenseCreateResponse
+import com.multisig.master.dto.UserBackednResponse
 import com.multisig.master.dto.UserExpenseResponse
+import com.multisig.master.dto.UserExpenseResponseExtened
 import com.multisig.master.dto.UserExpenseResponseWithDecision
 import com.multisig.master.event.ExpenseApprovedEvent
 import com.multisig.master.model.Expense
@@ -36,9 +38,9 @@ class ExpensesService(
     }
 
     @Transactional(readOnly = true)
-    fun getExpensesToDecide(id: String): List<UserExpenseResponse> {
+    fun getExpensesToDecide(id: String): List<UserExpenseResponseExtened> {
         val array = requestsRepo.findPendingExpensesByUserId(id.toLong())
-        return array.toResponse()
+        return array.toResponseExtened()
     }
 
     @Transactional
@@ -217,4 +219,27 @@ class ExpensesService(
             ammountOfDollars = it.ammountDollars
         )
     }
+    
+     private fun List<Expense>.toResponseExtened(): List<UserExpenseResponseExtened> = this.map {
+        UserExpenseResponseExtened(
+            UserExpenseResponse(
+            id = it.id!!,
+            reason = it.reason ?: "",
+            createdAt = it.createdAt!!,
+            updatedAt = it.updatedAt!!,
+            status = it.status,
+            ammountOfDollars = it.ammountDollars
+            ),
+            UserBackednResponse(
+                id =  it.user!!.id!!,
+                name =  it.user!!.name,
+                surname =  it.user!!.surname,
+                username =  it.user!!.username,
+                reportsTo =  it.user!!.reportsTo?.name ?: "None",
+                role =  it.user!!.role,
+            )
+        )
+    }
+    
+
 }

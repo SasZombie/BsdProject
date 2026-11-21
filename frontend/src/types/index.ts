@@ -7,12 +7,7 @@ export type Role =
   | "BOARD_DIRECTOR"
   | "ACCOUNTANT";
 
-export type Status =
-  | "PENDING"
-  | "APPROVED"
-  | "REJECTED"
-  | "VETOED"
-
+export type Status = "PENDING" | "APPROVED" | "REJECTED" | "VETOED";
 
 export interface User {
   token: string;
@@ -29,7 +24,7 @@ export interface BackEndUser {
 }
 
 export interface Expense {
-  id: number,
+  id: number;
   reason: String;
   createdAt: Date;
   updatedAt: Date;
@@ -37,9 +32,22 @@ export interface Expense {
   ammountOfDollars: number;
 }
 
+export interface ExtenedExpense {
+  expense: Expense;
+  user: BackEndUser;
+}
+
+export interface ExpenseForm {
+  id: number;
+  reason: String;
+  createdAt: Date;
+  status: Status;
+  ammountOfDollars: number;
+  userName: string;
+}
 
 export interface Payment {
-  id: number,
+  id: number;
   reason: String;
   createdAt: Date;
   updatedAt: Date;
@@ -47,12 +55,12 @@ export interface Payment {
 }
 
 export interface Tab {
-    id: string,
-    label: string,
-    show: boolean
+  id: string;
+  label: string;
+  show: boolean;
 }
 
 export interface UserProps {
-  currentUser: User,
-  extraOptions: boolean
+  currentUser: User;
+  extraOptions: boolean;
 }
