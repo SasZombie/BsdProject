@@ -93,7 +93,6 @@ class PaymentService(private val journalService: PaymentJournalService) {
                 journalService.recordDone(stage.id)
             } else {
                 try {
-                    
                     journalService.recordDone(stage.id)
                 } catch (ex: Exception) {
                     journalService.markFailed(stage.id)

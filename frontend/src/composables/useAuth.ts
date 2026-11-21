@@ -11,8 +11,6 @@ export const useAuth = () => {
 
   //AdminUsername 1
   const login = async (username: string, pass: string): Promise<void> => {
-    loading.value = true;
-    error.value = null;
 
     try {
       const res = await fetch("/api/v1/auth/login", {

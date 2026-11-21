@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+@theme {
+ --color-nuxtGreen: #00DC82;
+ --color-nuxtBlack: rgb(10,10,10,1);
+}
