@@ -17,6 +17,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 class SecurityConfig {
 
+    //TODO: I preffer argon2
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 

@@ -18,4 +18,11 @@ interface ExpenseRepository : JpaRepository<Expense, Long> {
           AND ed.decision = :status
         """)
     fun findPendingExpensesByUserId(@Param("userId") userId: Long, @Param("status") status: Status = Status.PENDING): List<Expense>
+    
+    @Query("""
+        SELECT ed.expense 
+        FROM ExpenseDecisions ed 
+        WHERE ed.user.id = :userId 
+        """)
+    fun findExpensesByUserId(@Param("userId") userId: Long): List<Expense>
 }

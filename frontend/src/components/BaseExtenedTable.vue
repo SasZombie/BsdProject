@@ -8,7 +8,7 @@ const props = withDefaults(defineProps<{
     extra?: boolean
 }>(),
     {
-        extra: true
+        extra: false
     })
 
 const headers = computed<string[]>(() => {
@@ -45,7 +45,7 @@ const formatCellValue = (val: any): string => {
 }
 
 const emit = defineEmits<{
-  (e: 'action', index: number, action: Status): void
+    (e: 'action', index: number, action: Status): void
 }>()
 
 </script>
@@ -68,9 +68,15 @@ const emit = defineEmits<{
                     <tr v-for="(row, rowIndex) in data" :key="rowIndex" class="transition-colors hover:bg-slate-800/30">
                         <td v-for="header in headers" :key="header"
                             class="whitespace-nowrap px-6 py-4 font-mono text-nuxtGreen">
-                            <BaseButton @click="emit('action', rowIndex, 'APPROVED')" text="Approve" v-if="header === 'action'"/>
-                            <BaseButton @click="emit('action', rowIndex, 'REJECTED')" text="Reject" v-if="header === 'action'"/>
-                            <BaseButton @click="emit('action', rowIndex, 'VETOED')" text="Veto" v-if="header === 'action' && extra"/>
+                            <div v-if="header === 'action'" >
+                                <div v-if="!extra" class="flex items-center gap-2">
+                                    <BaseButton @click="emit('action', rowIndex, 'APPROVED')" text="Approve" />
+                                    <BaseButton @click="emit('action', rowIndex, 'REJECTED')" text="Reject" />
+                                </div>
+                                <div v-else>
+                                    <BaseButton @click="emit('action', rowIndex, 'VETOED')" text="Veto"/>
+                                </div>
+                            </div>
                             <span v-else>
                                 {{ formatCellValue(row[header]) }}
                             </span>

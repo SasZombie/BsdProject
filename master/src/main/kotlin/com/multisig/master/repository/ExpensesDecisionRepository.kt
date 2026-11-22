@@ -11,5 +11,8 @@ interface ExpensesDecisionRepository : JpaRepository<ExpenseDecisions, Long> {
     
     fun findAllByExpenseId(expenseId: Long): List<ExpenseDecisions>
     
-    fun findAllByExpenseIdAndIdNot(expenseId: Long, expenseDecisionIdToExclude: Long): List<ExpenseDecisions>            
+    fun findAllByExpenseIdAndIdNot(expenseId: Long, expenseDecisionIdToExclude: Long): List<ExpenseDecisions> 
+    fun findAllByUserIdAndExpenseIdIn(userId: Long, expenseIds: List<Long>): List<ExpenseDecisions>
+    
+    fun findAllByExpenseIdIn(expenses: List<Long>): List<ExpenseDecisions>           
 }

@@ -30,7 +30,34 @@ export interface Expense {
   updatedAt: Date;
   status: Status;
   ammountOfDollars: number;
+  needsApprovalBy: string[];
+  approvedBy: string[];
+  rejectedBy: string[];
+  postedBy: string;
 }
+
+
+export interface ActiveExpense {
+  id: number;
+  reason: String;
+  createdAt: Date;
+  updatedAt: Date;
+  ammountOfDollars: number;
+  needsApprovalBy: string[];
+  approvedBy: string[];
+}
+
+export interface PastExpsnse {
+  id: number;
+  reason: String;
+  createdAt: Date;
+  updatedAt: Date;
+  status: Status;
+  ammountOfDollars: number;
+  approvedBy: string[];
+  rejectedBy: string[];
+}
+
 
 export interface ExtenedExpense {
   expense: Expense;
@@ -42,6 +69,16 @@ export interface ExpenseForm {
   reason: String;
   createdAt: Date;
   status: Status;
+  ammountOfDollars: number;
+  userName: string;
+}
+
+export interface ExpensesDecided {
+  id: number;
+  reason: String;
+  createdAt: Date;
+  status: Status;
+  personalStatus: Status;
   ammountOfDollars: number;
   userName: string;
 }

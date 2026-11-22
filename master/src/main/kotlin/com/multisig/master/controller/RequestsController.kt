@@ -3,7 +3,6 @@ package com.multisig.master.controller
 import jakarta.validation.Valid
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
-import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseExtened
@@ -33,7 +32,7 @@ class RequestsController(
 ) {
 
     @PostMapping("/expense/create")
-    fun createPayment(@Valid @RequestBody request: ExpenseCreateRequest): ResponseEntity<ExpenseCreateResponse> {
+    fun createPayment(@Valid @RequestBody request: ExpenseCreateRequest): ResponseEntity<UserExpenseResponse> {
         val created = expensesService.create(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
@@ -42,15 +41,23 @@ class RequestsController(
     fun getExpenses(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponse>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
-        val expenses = expensesService.getAllExpenses(token)
+        val expenses = expensesService.getAllPersonalExpenses(token)
+        return ResponseEntity.ok(expenses)
+    }
+    
+    @GetMapping("/expense/all")
+    fun getAllExpenses(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+
+        val expenses = expensesService.getAllExpenses()
         return ResponseEntity.ok(expenses)
     }
 
-    @GetMapping("/expense/toDecide")
-    fun getExpensesToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
+    @GetMapping("/expense/decisions")
+    fun getExpensesToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseWithDecision>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
-        val expenses = expensesService.getExpensesToDecide(token)
+        val expenses = expensesService.getExpensesDecisions(token)
         return ResponseEntity.ok(expenses)
     }
 
@@ -63,7 +70,6 @@ class RequestsController(
         val created = expensesService.applyDecision(token, request)
         return ResponseEntity.status(HttpStatus.OK).body(created)
     }
-
 
     @PostMapping(
         "/payments/upload",

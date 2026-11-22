@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useExpenses } from '../composables/useExpenses';
-import type { Expense, Status, Tab, UserProps } from '../types';
+import type { Status, Tab, UserProps } from '../types';
 import BaseInput from './BaseInput.vue';
 import BaseButton from './BaseButton.vue';
 import BaseNavigation from './BaseNavigation.vue';
@@ -16,90 +16,109 @@ const reason = ref('I want money cuz I can');
 const ammountDollars = ref(67);
 
 const {
-    postExpense,
-    decideExpense,
-    error,
-    loading,
-    getPersonalExpenses,
-    getExpensesToDecide,
-    personalExpenses,
-    expensesToDecide,
-    extenedExpenses
+  postExpense,
+  decideExpense,
+  error,
+  loading,
+  getPersonalExpenses,
+  getExpensesDecisions,
+  activePersonalExpenses,
+  pastPersonalExpenses,
+  expensesToDecide,
+  expensesDecided,
+  getAllExpenses,
+  allExpenses,
 } = useExpenses();
 
 
 getPersonalExpenses(props.currentUser.token);
-getExpensesToDecide(props.currentUser.token);
+getExpensesDecisions(props.currentUser.token);
+getAllExpenses(props.currentUser.token)
 
 const currentTabs: Tab[] = [
-    {
-        id: 'activePersonal',
-        label: 'Active Personal Expenses',
-        show: true
-    },
-    {
-        id: 'pastPersonal',
-        label: 'Past Personal Expenses',
-        show: true
-    },
-    {
-        id: 'toDecide',
-        label: 'Active Expenses to Decide',
-        show: true
-    },
-    {
-        id: 'pastToDecide',
-        label: 'Past expenses Decided',
-        show: true
-    }
+  {
+    id: 'activePersonal',
+    label: 'Active Personal Expenses',
+    show: true
+  },
+  {
+    id: 'pastPersonal',
+    label: 'Past Personal Expenses',
+    show: true
+  },
+  {
+    id: 'toDecide',
+    label: 'Active Expenses to Decide',
+    show: true
+  },
+  {
+    id: 'pastToDecide',
+    label: 'Past expenses Decided',
+    show: true
+  },
+  {
+    id: 'allExpenses',
+    label: 'All expenses done',
+    show: true
+  }
 ].filter((elem) => elem.show === true)
 
 const activeTab = ref('activePersonal')
 
 
-const onApprove = (index: number, decision: Status) => {
+const onAction = async (index: number, decision: Status) => {
 
-  const expense = extenedExpenses.value[index]
-  decideExpense(currentUser.value!!.token, expense.expense, decision)
+  const saved = [...expensesToDecide.value]
+  const expense = expensesToDecide.value[index]
+  expensesToDecide.value.splice(index, 1)
+
+  console.log(expense.id)
+
+  await decideExpense(currentUser.value!!.token, expense.id, decision)
+
+  if (error.value !== null) {
+    expensesToDecide.value = saved
+  }
 }
 
 </script>
 
 <template>
 
-<form @submit.prevent="postExpense(ammountDollars, reason, currentUser!!.token)" 
-  class="flex flex-wrap items-center gap-2.5 max-w-2xl"
->
-<div class="px-1 py-2">
-    <h3 class="text-base font-semibold text-white tracking-wide">
-      New Expense
-    </h3>
- 
-  </div>
-  <div class="flex-1 min-w-[180px]">
-    <BaseInput v-model="reason" type="text" placeholder="Reason" />
-  </div>
+  <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!!.token)"
+    class="flex flex-wrap items-center gap-2.5 max-w-2xl">
+    <div class="px-1 py-2">
+      <h3 class="text-base font-semibold text-white tracking-wide">
+        New Expense
+      </h3>
 
-  <div class="w-33">
-    <BaseInput v-model="ammountDollars" type="number" placeholder="Amount ($)" />
-  </div>
+    </div>
+    <div class="flex-1 min-w-[180px]">
+      <BaseInput v-model="reason" type="text" placeholder="Reason" />
+    </div>
 
-  <div class="">
-    <BaseButton text="Submit Request" :disabled="loading" type="submit" />
-  </div>
+    <div class="w-33">
+      <BaseInput v-model="ammountDollars" type="number" placeholder="Amount ($)" />
+    </div>
 
-  <p v-if="error" class="w-full text-xs text-red-400 mt-1">{{ error }}</p>
-</form>
+    <div class="">
+      <BaseButton text="Submit Request" :disabled="loading" type="submit" />
+    </div>
 
-    <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
+    <p v-if="error" class="w-full text-xs text-red-400 mt-1">{{ error }}</p>
+  </form>
 
-    <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
+  <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
 
-    <BasePlainTable v-if="activeTab === 'activePersonal'" :data="personalExpenses"/>
-    
-    <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="personalExpenses"/>
+  <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
 
-    <BaseExtenedTable @action="onApprove" v-if="activeTab === 'toDecide'" :data="expensesToDecide"/>
-    <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="personalExpenses"/>
+  <BasePlainTable v-if="activeTab === 'activePersonal'" :data="activePersonalExpenses" />
+
+  <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="pastPersonalExpenses" />
+
+  <BaseExtenedTable @action="onAction" v-if="activeTab === 'toDecide'" :data="expensesToDecide" />
+  <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="expensesDecided" :extra="true" />
+
+  <BaseExtenedTable v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
 
 </template>

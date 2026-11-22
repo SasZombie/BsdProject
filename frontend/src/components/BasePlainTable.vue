@@ -36,6 +36,7 @@ const formatCellValue = (val: any): string => {
 
     return String(val)
 }
+
 </script>
 
 <template>
@@ -53,7 +54,7 @@ const formatCellValue = (val: any): string => {
                 </thead>
 
                 <tbody class="divide-y divide-slate-800/60">
-                    <tr v-for="(row, rowIndex) in data" :key="rowIndex" class="transition-colors hover:bg-slate-800/30">
+                    <tr v-for="row in data" :key="row.id ?? row.reason" class="hover:transition-colors hover:bg-slate-800/30">
                         <td v-for="header in headers" :key="header"
                             class="whitespace-nowrap px-6 py-4 font-mono text-nuxtGreen">
                             {{ formatCellValue(row[header]) ?? '-' }}

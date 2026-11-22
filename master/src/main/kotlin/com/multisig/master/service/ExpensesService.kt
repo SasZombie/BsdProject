@@ -2,7 +2,6 @@ package com.multisig.master.service
 
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
-import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.dto.UserBackednResponse
 import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseExtened
@@ -32,15 +31,77 @@ class ExpensesService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getAllExpenses(id: String): List<UserExpenseResponse> {
-        val array = requestsRepo.findAllByUserId(id.toLong())
-        return array.toResponse()
+    fun getAllPersonalExpenses(id: String): List<UserExpenseResponse> {
+        val requests = requestsRepo.findAllByUserId(id.toLong())
+        if (requests.isEmpty()) return emptyList()
+
+        val requestIds = requests.mapNotNull { it.id }
+        //Map<ExpenseID -> ListOfExpenseDecisions>
+        val decisionsByRequestId = reqDecisionRepo.findAllByExpenseIdIn(requestIds)
+            .groupBy { it.expense!!.id }
+
+        return requests.map { req ->
+            val decisions = decisionsByRequestId[req.id].orEmpty()
+            val (pendingDecisions, decidedDecisions) = decisions.partition { it.decision == Status.PENDING }
+            val (approvedBy, rejectedBy) = decidedDecisions.partition { it.decision == Status.APPROVED }
+                .let { (approved, denied) ->
+                    approved.map { it.user!!.name } to denied.map { it.user!!.name }
+                }
+
+            val pending = pendingDecisions.map { it.user!!.name }
+            req.toResponse(pending, approvedBy, rejectedBy = rejectedBy)
+        }
     }
 
     @Transactional(readOnly = true)
-    fun getExpensesToDecide(id: String): List<UserExpenseResponseExtened> {
-        val array = requestsRepo.findPendingExpensesByUserId(id.toLong())
-        return array.toResponseExtened()
+    fun getAllExpenses(): List<UserExpenseResponseExtened> {
+        val requests = requestsRepo.findAll()
+        if (requests.isEmpty()) return emptyList()
+
+        val requestIds = requests.mapNotNull { it.id }
+        //Map<ExpenseID -> ListOfExpenseDecisions>
+        val decisionsByRequestId = reqDecisionRepo.findAllByExpenseIdIn(requestIds)
+            .groupBy { it.expense!!.id }
+
+        return requests.map { req ->
+            val decisions = decisionsByRequestId[req.id].orEmpty()
+            val (pendingDecisions, decidedDecisions) = decisions.partition { it.decision == Status.PENDING }
+            val (approvedBy, rejectedBy) = decidedDecisions.partition { it.decision == Status.APPROVED }
+                .let { (approved, denied) ->
+                    approved.map { it.user!!.name } to denied.map { it.user!!.name }
+                }
+
+            val pending = pendingDecisions.map { it.user!!.name }
+            req.toResponseExtened(pending, approvedBy, rejectedBy = rejectedBy)
+        }
+
+    }
+
+    @Transactional(readOnly = true)
+    fun getExpensesDecisions(id: String): List<UserExpenseResponseWithDecision> {
+        val userId = id.toLong()
+        val expenses = requestsRepo.findExpensesByUserId(userId)
+        if (expenses.isEmpty()) return emptyList()
+
+        val expenseIds = expenses.mapNotNull { it.id }
+        val decisionsByExpenseId: Map<Long, ExpenseDecisions> = reqDecisionRepo
+            .findAllByUserIdAndExpenseIdIn(userId, expenseIds)
+            .associateBy { it.expense!!.id!! }
+
+        return expenses.map { expense ->
+            val decision = decisionsByExpenseId[expense.id]?.decision ?: Status.PENDING
+
+            UserExpenseResponseWithDecision(
+                id = expense.id!!,
+                reason = expense.reason.orEmpty(),
+                createdAt = expense.createdAt!!,
+                updatedAt = expense.updatedAt!!,
+                status = expense.status,
+                personalStatus = decision,
+                ammountOfDollars = expense.ammountDollars,
+                userName = expense.user?.name.orEmpty()
+            )
+        }
     }
 
     @Transactional
@@ -66,6 +127,7 @@ class ExpensesService(
             )
         }
         decisionQuerry.decision = request.decision
+
         if (request.comment != null) {
             decisionQuerry.comment = request.comment
         }
@@ -99,14 +161,15 @@ class ExpensesService(
             createdAt = initialReq.createdAt!!,
             updatedAt = Instant.now(),
             status = initialReq.status,
-            personalDecision = request.decision,
-            ammountOfDollars = initialReq.ammountDollars
+            personalStatus = request.decision,
+            ammountOfDollars = initialReq.ammountDollars,
+            userName = initialReq.user!!.name
         )
         return returned
     }
 
     @Transactional
-    fun create(request: ExpenseCreateRequest): ExpenseCreateResponse {
+    fun create(request: ExpenseCreateRequest): UserExpenseResponse {
 
         val userProxy = userRepo.getReferenceById(request.userId)
 
@@ -118,13 +181,25 @@ class ExpensesService(
             reason = request.reason,
             status = Status.PENDING
         )
-        val request = requestsRepo.save(newExpense).toResponse()
-        decideApprovals(newExpense)
-        return request
+        val request = requestsRepo.save(newExpense)
+        val usersThatMustApprove = decideApprovals(newExpense)
+        val response = UserExpenseResponse(
+            id = request.id!!,
+            reason = request.reason!!,
+            createdAt = request.createdAt!!,
+            updatedAt = request.updatedAt!!,
+            status = request.status,
+            ammountOfDollars = request.ammountDollars,
+            needsApprovalBy = usersThatMustApprove.map { user -> user.name },
+            approvedBy = emptyList(),
+            rejectedBy = emptyList()
+        )
+
+        return response
     }
 
     @Transactional
-    private fun decideApprovals(expense: Expense) {
+    private fun decideApprovals(expense: Expense): List<User> {
 
         val dollars = expense.ammountDollars
         val ceo = getUserByUsername("CEO")
@@ -174,11 +249,7 @@ class ExpensesService(
                     }
 
                     else -> {
-                        println("AIci se executa!")
                         val manager1 = expense.user?.reportsTo ?: cfo
-                        println(expense.user?.surname)
-                        println(expense.user?.reportsTo?.surname)
-
                         listOf(manager1)
                     }
                 }
@@ -193,6 +264,7 @@ class ExpensesService(
             reqDecisionRepo.save(newDecision)
         }
 
+        return usersThatMustApprove
     }
 
 
@@ -202,44 +274,72 @@ class ExpensesService(
 
     // ExpenseCreateResponse
     //TODO: Update this to reflect approvals neededs
-    @Suppress("UnusedReceiverParameter")
-    private fun Expense.toResponse() = ExpenseCreateResponse(
-        message = "Created!",
-        approvalsNeededCount = 2
-    )
+    // @Suppress("UnusedReceiverParameter")
+    // private fun Expense.toResponse() = ExpenseCreateResponse(
+    //     message = "Created!",
+    //     approvalsNeededCount = 2
+    // )
 
 
-    private fun List<Expense>.toResponse(): List<UserExpenseResponse> = this.map {
+    private fun Expense.toResponse(
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): UserExpenseResponse =
         UserExpenseResponse(
-            id = it.id!!,
-            reason = it.reason ?: "",
-            createdAt = it.createdAt!!,
-            updatedAt = it.updatedAt!!,
-            status = it.status,
-            ammountOfDollars = it.ammountDollars
+            id = this.id!!,
+            reason = this.reason ?: "",
+            createdAt = this.createdAt!!,
+            updatedAt = this.updatedAt!!,
+            status = this.status,
+            ammountOfDollars = this.ammountDollars,
+            needsApprovalBy = needsApprovalBy,
+            approvedBy = approvedBy,
+            rejectedBy = rejectedBy
         )
-    }
-    
-     private fun List<Expense>.toResponseExtened(): List<UserExpenseResponseExtened> = this.map {
+
+    private fun Expense.toResponseExtened(
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): UserExpenseResponseExtened =
         UserExpenseResponseExtened(
             UserExpenseResponse(
-            id = it.id!!,
-            reason = it.reason ?: "",
-            createdAt = it.createdAt!!,
-            updatedAt = it.updatedAt!!,
-            status = it.status,
-            ammountOfDollars = it.ammountDollars
+                id = id!!,
+                reason = reason ?: "",
+                createdAt = createdAt!!,
+                updatedAt = updatedAt!!,
+                status = status,
+                ammountOfDollars = ammountDollars,
+                needsApprovalBy = needsApprovalBy,
+                approvedBy = approvedBy,
+                rejectedBy = rejectedBy
             ),
             UserBackednResponse(
-                id =  it.user!!.id!!,
-                name =  it.user!!.name,
-                surname =  it.user!!.surname,
-                username =  it.user!!.username,
-                reportsTo =  it.user!!.reportsTo?.name ?: "None",
-                role =  it.user!!.role,
+                id = user!!.id!!,
+                name = user!!.name,
+                surname = user!!.surname,
+                username = user!!.username,
+                reportsTo = user!!.reportsTo?.name ?: "None",
+                role = user!!.role,
             )
         )
+
+    private fun List<Expense>.toResponse(
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): List<UserExpenseResponse> = this.map {
+        it.toResponse(needsApprovalBy, approvedBy, rejectedBy)
     }
-    
+
+    private fun List<Expense>.toResponseExtened(
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): List<UserExpenseResponseExtened> = this.map {
+        it.toResponseExtened(needsApprovalBy, approvedBy, rejectedBy)
+    }
+
 
 }
