@@ -8,6 +8,7 @@ import type {
   PastExpsnse,
   Status,
 } from "../types";
+import { currentUser } from "./useAuth";
 
 export const useExpenses = () => {
   const error = ref<string | null>(null);
@@ -43,7 +44,10 @@ export const useExpenses = () => {
       if (!res.ok) throw new Error("Invalid credentials");
 
       const body: Expense = await res.json();
+      body.postedBy = currentUser.value!!.name
+
       activePersonalExpenses.value.push(body);
+      allExpenses.value.push(body);
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -115,9 +119,9 @@ export const useExpenses = () => {
       });
 
       if (!res.ok) throw new Error("Invalid credentials");
-      
+
       const body: ExpensesDecided[] = await res.json();
-      console.log("Am rpimti", body)
+      console.log("Am rpimti", body);
 
       for (const item of body) {
         if (item.status === "PENDING") {
@@ -164,8 +168,8 @@ export const useExpenses = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
       extenedExpenses.value = await res.json();
-      console.log(extenedExpenses.value)
-      
+      console.log(extenedExpenses.value);
+
       for (const item of extenedExpenses.value) {
         allExpenses.value.push({
           id: item.expense.id,
@@ -178,7 +182,7 @@ export const useExpenses = () => {
 
           needsApprovalBy: item.expense.needsApprovalBy,
           approvedBy: item.expense.approvedBy,
-          rejectedBy: item.expense.rejectedBy
+          rejectedBy: item.expense.rejectedBy,
         });
       }
     } catch (e: any) {
@@ -210,7 +214,33 @@ export const useExpenses = () => {
       if (!res.ok) throw new Error("Invalid credentials");
 
       const body: ExpensesDecided = await res.json();
-      expensesDecided.value.push(body)
+      expensesDecided.value.push(body);
+    } catch (e: any) {
+      error.value = e.message;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const vetoExpense = async (token: string, exp: number): Promise<void> => {
+    try {
+      const res = await fetch("/api/v1/requests/expense/veto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          expenseId: exp,
+          comment: "Bla Bla Bla",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Invalid credentials");
+
+      console.log("AM trecut")
+      const target = allExpenses.value.find((elem) => elem.id === exp);
+      target && (target.status = "VETOED");
 
     } catch (e: any) {
       error.value = e.message;
@@ -221,6 +251,7 @@ export const useExpenses = () => {
 
   return {
     postExpense,
+    vetoExpense,
     error,
     decideExpense,
     loading,

@@ -1,7 +1,6 @@
 package com.multisig.master.service
 
 import com.multisig.master.dto.DecideExpense
-import com.multisig.master.dto.ExpenseCreateResponse
 import com.multisig.master.dto.PaymentFileDownload
 import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserPaymentFileResponseWithDecision
@@ -316,12 +315,6 @@ class PaymentFileService(
 
     // ExpenseCreateResponse
     //TODO: Update this to reflect approvals neededs
-    @Suppress("UnusedReceiverParameter")
-    private fun Expense.toResponse() = ExpenseCreateResponse(
-        message = "Created!",
-        approvalsNeededCount = 2
-    )
-
     private fun PaymentFile.toResponse(): UserPaymentFileUploadResponse = UserPaymentFileUploadResponse(
         id = id!!,
         reason = description ?: "",

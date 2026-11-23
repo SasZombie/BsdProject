@@ -12,6 +12,7 @@ export type Status = "PENDING" | "APPROVED" | "REJECTED" | "VETOED";
 export interface User {
   token: string;
   role: Role;
+  name: string;
 }
 
 export interface BackEndUser {
@@ -35,7 +36,6 @@ export interface Expense {
   rejectedBy: string[];
   postedBy: string;
 }
-
 
 export interface ActiveExpense {
   id: number;

@@ -47,7 +47,8 @@ data class UserUpdateRequest(
 
 data class UserLogInResponse(
     val token: String,
-    val role: Role
+    val role: Role,
+    val name: String
 )
 
 data class UserBackednResponse(

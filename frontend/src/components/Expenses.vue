@@ -18,6 +18,7 @@ const ammountDollars = ref(67);
 const {
   postExpense,
   decideExpense,
+  vetoExpense,
   error,
   loading,
   getPersonalExpenses,
@@ -73,40 +74,71 @@ const onAction = async (index: number, decision: Status) => {
   expensesToDecide.value.splice(index, 1)
 
   console.log(expense.id)
-
   await decideExpense(currentUser.value!!.token, expense.id, decision)
+
 
   if (error.value !== null) {
     expensesToDecide.value = saved
   }
 }
 
+const onAllExpenses = async (index: number, status: Status) => {
+  status;
+  const expense = allExpenses.value[index]
+
+  console.log(expense.id)
+
+  await vetoExpense(currentUser.value!!.token, expense.id)
+}
+
+const showButton = ref(false)
+const buttonText = ref("Add New Expense")
+
+const handleShowButton = () => {
+  showButton.value = !showButton.value
+
+  if (showButton.value) {
+    buttonText.value = "Close New Expense"
+  }
+  else {
+    buttonText.value = "Add New Expense"
+  }
+
+
+}
+
+
 </script>
 
 <template>
 
-  <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!!.token)"
-    class="flex flex-wrap items-center gap-2.5 max-w-2xl">
-    <div class="px-1 py-2">
-      <h3 class="text-base font-semibold text-white tracking-wide">
-        New Expense
-      </h3>
+  <BaseButton @click="handleShowButton" :text="buttonText" />
 
-    </div>
-    <div class="flex-1 min-w-[180px]">
-      <BaseInput v-model="reason" type="text" placeholder="Reason" />
-    </div>
+  <div v-show="showButton">
+    <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!!.token)"
+      class="flex flex-wrap items-center gap-2.5 max-w-2xl">
+      <div class="px-1 py-2">
+        <h3 class="text-base font-semibold text-white tracking-wide">
+          New Expense
+        </h3>
 
-    <div class="w-33">
-      <BaseInput v-model="ammountDollars" type="number" placeholder="Amount ($)" />
-    </div>
+      </div>
+      <div class="flex-1 min-w-[180px]">
+        <BaseInput v-model="reason" type="text" placeholder="Reason" />
+      </div>
 
-    <div class="">
-      <BaseButton text="Submit Request" :disabled="loading" type="submit" />
-    </div>
+      <div class="w-33">
+        <BaseInput v-model="ammountDollars" type="number" placeholder="Amount ($)" />
+      </div>
 
-    <p v-if="error" class="w-full text-xs text-red-400 mt-1">{{ error }}</p>
-  </form>
+      <div class="">
+        <BaseButton text="Submit Request" :disabled="loading" type="submit" />
+      </div>
+
+      <p v-if="error" class="w-full text-xs text-red-400 mt-1">{{ error }}</p>
+    </form>
+  </div>
+
 
   <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
 
@@ -117,8 +149,9 @@ const onAction = async (index: number, decision: Status) => {
   <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="pastPersonalExpenses" />
 
   <BaseExtenedTable @action="onAction" v-if="activeTab === 'toDecide'" :data="expensesToDecide" />
+
   <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="expensesDecided" :extra="true" />
 
-  <BaseExtenedTable v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
+  <BaseExtenedTable @action="onAllExpenses" v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
 
 </template>

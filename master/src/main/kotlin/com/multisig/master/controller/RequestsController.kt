@@ -8,6 +8,7 @@ import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseExtened
 import com.multisig.master.dto.UserExpenseResponseWithDecision
 import com.multisig.master.dto.UserPaymentFileUploadResponse
+import com.multisig.master.dto.VetoExpense
 import com.multisig.master.service.ExpensesService
 import com.multisig.master.service.PaymentFileService
 import org.springframework.core.io.Resource
@@ -32,9 +33,17 @@ class RequestsController(
 ) {
 
     @PostMapping("/expense/create")
-    fun createPayment(@Valid @RequestBody request: ExpenseCreateRequest): ResponseEntity<UserExpenseResponse> {
+    fun createExpense(@Valid @RequestBody request: ExpenseCreateRequest): ResponseEntity<UserExpenseResponse> {
         val created = expensesService.create(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
+    }
+    
+    @PostMapping("/expense/veto")
+    fun vetoExpense(@Valid @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: VetoExpense): ResponseEntity<String> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        
+        val created = expensesService.veto(request)
+        return ResponseEntity.ok("Vetoed")
     }
 
     @GetMapping("/expense/personal")

@@ -27,7 +27,8 @@ class AuthService(
         return UserLogInResponse(
             //TODO: This needs redis proxy
             token = user.id.toString(),
-            role = user.role
+            role = user.role,
+            name = user.name
         )
     }
 }

@@ -6,6 +6,7 @@ import com.multisig.master.dto.UserBackednResponse
 import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseExtened
 import com.multisig.master.dto.UserExpenseResponseWithDecision
+import com.multisig.master.dto.VetoExpense
 import com.multisig.master.event.ExpenseApprovedEvent
 import com.multisig.master.model.Expense
 import com.multisig.master.model.ExpenseDecisions
@@ -51,6 +52,17 @@ class ExpensesService(
             val pending = pendingDecisions.map { it.user!!.name }
             req.toResponse(pending, approvedBy, rejectedBy = rejectedBy)
         }
+    }
+    @Transactional
+    fun veto(request: VetoExpense)
+    {
+        println("This veto function is deeply integrated with the payment system" + 
+                "that is not implemented, so I will also skip the boilerplate")
+                
+        val expense = requestsRepo.findById(request.expenseId).orElseThrow { NoSuchElementException("This request doesnt exist") }
+        
+        expense.status = Status.VETOED
+        
     }
 
     @Transactional(readOnly = true)

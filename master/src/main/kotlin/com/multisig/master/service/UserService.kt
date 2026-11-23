@@ -79,7 +79,8 @@ class UserService(private val userRepository: UserRepository) {
 
     private fun User.toResponse() = UserLogInResponse(
         token = this.id.toString(),
-        role = this.role
+        role = this.role,
+        name = this.name
     )
 
     private fun User.toBackendResponse() = UserBackednResponse(

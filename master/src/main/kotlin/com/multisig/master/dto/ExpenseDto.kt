@@ -31,6 +31,11 @@ data class DecideExpense(
     val comment: String?
 )
 
+data class VetoExpense(
+    val expenseId: Long,
+    val comment: String?
+)
+
 data class UserExpenseResponse(
     val id: Long,
     val reason: String,
@@ -40,8 +45,7 @@ data class UserExpenseResponse(
     val ammountOfDollars: Long,
     val needsApprovalBy: List<String>,
     val approvedBy: List<String>,
-    val rejectedBy: List<String>,
-    
+    val rejectedBy: List<String>,   
 )
 
 data class UserExpenseResponseExtened(
