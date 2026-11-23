@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useExpenses } from '../composables/useExpenses';
-import type { Expense, Status, Tab, UserProps } from '../types';
+import type { Status, Tab, UserProps } from '../types';
 import BaseInput from './BaseInput.vue';
 import BaseButton from './BaseButton.vue';
 import BaseNavigation from './BaseNavigation.vue';
@@ -28,13 +28,18 @@ const {
   expensesToDecide,
   expensesDecided,
   getAllExpenses,
-  allExpenses,
+  allExpenses
 } = useExpenses();
 
 
-getPersonalExpenses(props.currentUser.token);
-getExpensesDecisions(props.currentUser.token);
-getAllExpenses(props.currentUser.token)
+const refresh = async () => {
+
+  await Promise.all([
+    getPersonalExpenses(props.currentUser.token),
+    getExpensesDecisions(props.currentUser.token),
+    getAllExpenses(props.currentUser.token)
+  ]);
+}
 
 const currentTabs: Tab[] = [
   {
@@ -135,12 +140,20 @@ const handleSentAction = () => {
 
   pendingAction.value = null
 }
+
+onMounted(async () => {
+  await refresh()
+})
 </script>
 
 <template>
 
-  <BaseButton @click="handleShowButton" :text="buttonText" />
+  <div class="flex items-center justify-between">
+    <BaseButton @click="handleShowButton" :text="buttonText" />
 
+    <BaseButton @click="refresh" text="Refresh" />
+
+  </div>
   <div v-show="showButton">
     <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!!.token)"
       class="flex flex-wrap items-center gap-2.5 max-w-2xl">
@@ -165,7 +178,6 @@ const handleSentAction = () => {
       <p v-if="error" class="w-full text-xs text-red-400 mt-1">{{ error }}</p>
     </form>
   </div>
-
 
 
   <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />

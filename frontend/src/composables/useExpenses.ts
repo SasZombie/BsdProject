@@ -22,6 +22,17 @@ export const useExpenses = () => {
 
   const allExpenses = ref<Expense[]>([]);
 
+
+  const reset = () =>
+  {
+    activePersonalExpenses.value = []
+    pastPersonalExpenses.value = []
+    expensesDecided.value = []
+    expensesToDecide.value = []
+    allExpenses.value = []
+    extenedExpenses.value = []
+  }
+
   const postExpense = async (
     ammountDollars: number,
     reason: string,
@@ -72,10 +83,14 @@ export const useExpenses = () => {
       if (!res.ok) throw new Error("Invalid credentials");
       const body: Expense[] = await res.json();
       console.log(body);
+      const temp1: ActiveExpense[] = []
+      const temp2: PastExpsnse[] = [];
+
+
 
       for (const e of body) {
         if (e.status === "PENDING") {
-          activePersonalExpenses.value.push({
+          temp1.push({
             id: e.id,
             reason: e.reason,
             createdAt: e.createdAt,
@@ -85,7 +100,7 @@ export const useExpenses = () => {
             approvedBy: e.approvedBy,
           });
         } else {
-          pastPersonalExpenses.value.push({
+          temp2.push({
             id: e.id,
             reason: e.reason,
             createdAt: e.createdAt,
@@ -97,6 +112,10 @@ export const useExpenses = () => {
           });
         }
       }
+
+      activePersonalExpenses.value = temp1
+      pastPersonalExpenses.value = temp2
+
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -121,11 +140,13 @@ export const useExpenses = () => {
       if (!res.ok) throw new Error("Invalid credentials");
 
       const body: ExpensesDecided[] = await res.json();
-      console.log("Am rpimti", body);
+
+      const temp1: ExpenseForm[] = []
+      const temp2: ExpensesDecided[] = []
 
       for (const item of body) {
         if (item.status === "PENDING") {
-          expensesToDecide.value.push({
+          temp1.push({
             id: item.id,
             createdAt: item.createdAt,
             reason: item.reason,
@@ -134,7 +155,7 @@ export const useExpenses = () => {
             userName: item.userName,
           });
         } else {
-          expensesDecided.value.push({
+          temp2.push({
             id: item.id,
             createdAt: item.createdAt,
             reason: item.reason,
@@ -145,6 +166,10 @@ export const useExpenses = () => {
           });
         }
       }
+
+      expensesToDecide.value = temp1
+      expensesDecided.value = temp2
+
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -170,8 +195,9 @@ export const useExpenses = () => {
       extenedExpenses.value = await res.json();
       console.log(extenedExpenses.value);
 
+      const temp: Expense[] = []
       for (const item of extenedExpenses.value) {
-        allExpenses.value.push({
+        temp.push({
           id: item.expense.id,
           createdAt: item.expense.createdAt,
           updatedAt: item.expense.updatedAt,
@@ -185,6 +211,9 @@ export const useExpenses = () => {
           rejectedBy: item.expense.rejectedBy,
         });
       }
+
+      allExpenses.value = temp
+      
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -264,5 +293,6 @@ export const useExpenses = () => {
     allExpenses,
     getAllExpenses,
     extenedExpenses,
+    reset
   };
 };
