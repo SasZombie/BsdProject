@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useExpenses } from '../composables/useExpenses';
-import type { Status, Tab, UserProps } from '../types';
+import type { Expense, Status, Tab, UserProps } from '../types';
 import BaseInput from './BaseInput.vue';
 import BaseButton from './BaseButton.vue';
 import BaseNavigation from './BaseNavigation.vue';
@@ -64,31 +64,25 @@ const currentTabs: Tab[] = [
   }
 ].filter((elem) => elem.show === true)
 
+
 const activeTab = ref('activePersonal')
 
+const onAction = async (expense: number, decision: Status) => {
 
-const onAction = async (index: number, decision: Status) => {
-
+  console.log(expense)
   const saved = [...expensesToDecide.value]
-  const expense = expensesToDecide.value[index]
-  expensesToDecide.value.splice(index, 1)
+  expensesToDecide.value = expensesToDecide.value.filter((num) => num.id !== expense)
 
-  console.log(expense.id)
-  await decideExpense(currentUser.value!!.token, expense.id, decision)
-
+  await decideExpense(currentUser.value!!.token, expense, decision)
 
   if (error.value !== null) {
     expensesToDecide.value = saved
   }
 }
 
-const onAllExpenses = async (index: number, status: Status) => {
-  status;
-  const expense = allExpenses.value[index]
+const onAllExpenses = async (expense: number) => {
 
-  console.log(expense.id)
-
-  await vetoExpense(currentUser.value!!.token, expense.id)
+  await vetoExpense(currentUser.value!!.token, expense)
 }
 
 const showButton = ref(false)
@@ -103,11 +97,44 @@ const handleShowButton = () => {
   else {
     buttonText.value = "Add New Expense"
   }
-
-
 }
 
+interface PendingAction {
+  expId: number;
+  decision: Status;
+  type: number
+}
 
+const pendingAction = ref<PendingAction | null>(null)
+
+const cancelAction = () => {
+  pendingAction.value = null
+}
+
+const onDecision = (index: number, decision: Status, type: number) => {
+
+  let expId = 0
+
+  if (type === 1) {
+    console.log("Sunt 1")
+    expId = expensesToDecide.value[index].id
+
+  } else if (type === 2) {
+    expId = allExpenses.value[index].id
+  }
+
+  pendingAction.value = { expId, decision, type }
+}
+
+const handleSentAction = () => {
+  if (pendingAction.value?.type === 1) {
+    onAction(pendingAction.value.expId, pendingAction.value.decision)
+  } else {
+    onAllExpenses(pendingAction.value!!.expId)
+  }
+
+  pendingAction.value = null
+}
 </script>
 
 <template>
@@ -140,6 +167,7 @@ const handleShowButton = () => {
   </div>
 
 
+
   <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
 
   <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
@@ -148,10 +176,39 @@ const handleShowButton = () => {
 
   <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="pastPersonalExpenses" />
 
-  <BaseExtenedTable @action="onAction" v-if="activeTab === 'toDecide'" :data="expensesToDecide" />
+  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'toDecide'" :data="expensesToDecide" />
 
   <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="expensesDecided" :extra="true" />
 
-  <BaseExtenedTable @action="onAllExpenses" v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
+  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
 
+
+  <Teleport to="body">
+    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0"
+      enter-to-class="opacity-100" leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
+      leave-to-class="opacity-0">
+      <div v-if="pendingAction"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+        @click.self="cancelAction">
+        <div class="w-full max-w-sm rounded-xl border border-slate-800 bg-nuxtBlack p-6 shadow-2xl">
+          <h3 class="text-base font-semibold text-white">
+            Confirm {{ pendingAction.decision }}
+          </h3>
+
+          <p class="mt-2 text-sm text-slate-400">
+            Are you sure you want to mark the expense as {{ pendingAction.decision }}
+          </p>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <button type="button" @click="cancelAction"
+              class="px-3.5 py-2 text-sm rounded-lg text-slate-400 hover:text-white transition cursor-pointer">
+              Cancel
+            </button>
+
+            <BaseButton @click="handleSentAction" :text="`Yes`" />
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>

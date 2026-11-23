@@ -45,7 +45,7 @@ const formatCellValue = (val: any): string => {
 }
 
 const emit = defineEmits<{
-    (e: 'action', index: number, action: Status): void
+    (e: 'action', index: number, action: Status, type: number): void
 }>()
 
 </script>
@@ -70,11 +70,11 @@ const emit = defineEmits<{
                             class="whitespace-nowrap px-6 py-4 font-mono text-nuxtGreen">
                             <div v-if="header === 'action'" >
                                 <div v-if="!extra" class="flex items-center gap-2">
-                                    <BaseButton @click="emit('action', rowIndex, 'APPROVED')" text="Approve" />
-                                    <BaseButton @click="emit('action', rowIndex, 'REJECTED')" text="Reject" />
+                                    <BaseButton @click="emit('action', rowIndex, 'APPROVED', 1)" text="Approve" />
+                                    <BaseButton @click="emit('action', rowIndex, 'REJECTED', 1)" text="Reject" />
                                 </div>
                                 <div v-else>
-                                    <BaseButton @click="emit('action', rowIndex, 'VETOED')" text="Veto"/>
+                                    <BaseButton @click="emit('action', rowIndex, 'VETOED', 2)" text="Veto"/>
                                 </div>
                             </div>
                             <span v-else>

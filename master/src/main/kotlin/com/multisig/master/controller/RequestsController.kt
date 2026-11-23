@@ -63,7 +63,7 @@ class RequestsController(
     }
 
     @GetMapping("/expense/decisions")
-    fun getExpensesToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseWithDecision>> {
+    fun getExpenseDecisions(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseWithDecision>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
         val expenses = expensesService.getExpensesDecisions(token)
