@@ -92,7 +92,6 @@ export interface Payment {
   approvedBy: string[];
   rejectedBy: string[];
   userName: string
-  
 }
 
 export interface DecisionPayments extends Payment

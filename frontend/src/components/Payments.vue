@@ -241,7 +241,7 @@ onMounted(async () => {
 
   <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="paymentsDecided" :extra="true" /> 
 
-  <!-- <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allPayments'" :data="allExspenses" :extra="true" /> -->
+  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allPayments'" :data="allPayments" :extra="true" />
 
 
   <Teleport to="body">

@@ -17,8 +17,7 @@ interface PaymentFileDecisionRepository : JpaRepository<PaymentFileDecisions, Lo
     ): List<PaymentFileDecisions>
 
     fun findAllByUserIdAndPaymentFileIdIn(userId: Long, paymentIds: List<Long>): List<PaymentFileDecisions>
-
-    fun findAllByPaymentFileIdIn(payments: List<Long>): List<PaymentFileDecisions>
+    fun findAllByPaymentFileIdIn(payments: List<Long>): List<PaymentFileDecisions>           
 
 
 }

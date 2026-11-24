@@ -7,9 +7,11 @@ import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseExtened
 import com.multisig.master.dto.UserExpenseResponseWithDecision
+import com.multisig.master.dto.UserPaymentFileExtended
 import com.multisig.master.dto.UserPaymentFileResponse
 import com.multisig.master.dto.UserPaymentFileResponseWithDecision
 import com.multisig.master.dto.VetoExpense
+import com.multisig.master.dto.VetoPayment
 import com.multisig.master.service.ExpensesService
 import com.multisig.master.service.PaymentFileService
 import org.springframework.core.io.Resource
@@ -142,11 +144,20 @@ class RequestsController(
     }
     
     @GetMapping("/payments/all")
-    fun getAllPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
+    fun getAllPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileExtended>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
-        val expenses = expensesService.getAllExpenses()
+        val expenses = paymentFileService.getAllExpenses()
         return ResponseEntity.ok(expenses)
+    }
+    
+    
+    @PostMapping("/payments/veto")
+    fun vetoPayment(@Valid @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: VetoPayment): ResponseEntity<String> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        
+        val created = paymentFileService.veto(request)
+        return ResponseEntity.ok("Vetoed")
     }
 
 }

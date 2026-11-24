@@ -31,7 +31,7 @@ export const usePayments = () => {
 
   const vetoPayment = async (token: string, exp: number): Promise<void> => {
     try {
-      const res = await fetch("/api/v1/requests/expense/veto", {
+      const res = await fetch("/api/v1/requests/payments/veto", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -45,9 +45,8 @@ export const usePayments = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
 
-      console.log("AM trecut");
-      // const target = allPa.value.find((elem) => elem.id === exp);
-      // target && (target.status = "VETOED");
+      const target = allPayments.value.find((elem) => elem.id === exp);
+      target && (target.status = "VETOED");
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -203,7 +202,7 @@ export const usePayments = () => {
 
     console.log(token);
     try {
-      const res = await fetch("/api/v1/requests/payments/allPayments", {
+      const res = await fetch("/api/v1/requests/payments/all", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -213,9 +212,9 @@ export const usePayments = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
 
-      const body = await res.json();
-      console.log("Payments to decide: ", body);
-      paymentsToDecide.value = body;
+      const body: Payment[] = await res.json();
+      allPayments.value = body;
+
     } catch (e: any) {
       error.value = e.message;
     } finally {

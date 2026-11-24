@@ -3,8 +3,10 @@ package com.multisig.master.service
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.PaymentFileDownload
 import com.multisig.master.dto.PaymentFileUploadRequest
+import com.multisig.master.dto.UserPaymentFileExtended
 import com.multisig.master.dto.UserPaymentFileResponseWithDecision
 import com.multisig.master.dto.UserPaymentFileResponse
+import com.multisig.master.dto.VetoPayment
 import com.multisig.master.event.PaymentFileApprovedEvent
 import com.multisig.master.model.PaymentFile
 import com.multisig.master.model.PaymentFileDecisions
@@ -66,6 +68,30 @@ class PaymentFileService(
             val pending = pendingDecisions.map { it.user!!.name }
             req.toResponse(pending, approvedBy, rejectedBy = rejectedBy)
         }
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllExpenses(): List<UserPaymentFileExtended> {
+        val requests = paymentFileRepo.findAll()
+        if (requests.isEmpty()) return emptyList()
+
+        val requestIds = requests.mapNotNull { it.id }
+        //Map<ExpenseID -> ListOfExpenseDecisions>
+        val decisionsByRequestId = reqDecisionRepo.findAllByPaymentFileIdIn(requestIds)
+            .groupBy { it.paymentFile!!.id }
+
+        return requests.map { req ->
+            val decisions = decisionsByRequestId[req.id].orEmpty()
+            val (pendingDecisions, decidedDecisions) = decisions.partition { it.decision == Status.PENDING }
+            val (approvedBy, rejectedBy) = decidedDecisions.partition { it.decision == Status.APPROVED }
+                .let { (approved, denied) ->
+                    approved.map { it.user!!.name } to denied.map { it.user!!.name }
+                }
+
+            val pending = pendingDecisions.map { it.user!!.name }
+            req.toResponseExtened(req.user!!.name, pending, approvedBy, rejectedBy = rejectedBy)
+        }
+
     }
 
     @Transactional(readOnly = true)
@@ -187,6 +213,21 @@ class PaymentFileService(
         }
 
         return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+
+    @Transactional
+    fun veto(request: VetoPayment) {
+        println(
+            "This veto function is deeply integrated with the payment system" +
+                    "that is not implemented, so I will also skip the boilerplate"
+        )
+
+        val expense =
+            paymentFileRepo.findById(request.expenseId).orElseThrow { NoSuchElementException("This request doesnt exist") }
+
+        expense.status = Status.VETOED
+
     }
 
     @Transactional(readOnly = true)
@@ -351,8 +392,7 @@ class PaymentFileService(
         userRepo.findByUsername(username)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "$username not found") }
 
-    // ExpenseCreateResponse
-    //TODO: Update this to reflect approvals neededs
+
     private fun PaymentFile.toResponse(
         needsApprovalBy: List<String>,
         approvedBy: List<String>,
@@ -369,6 +409,23 @@ class PaymentFileService(
             rejectedBy = rejectedBy
         )
 
+    private fun PaymentFile.toResponseExtened(
+        userName: String,
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): UserPaymentFileExtended =
+        UserPaymentFileExtended(
+            id = id!!,
+            reason = description ?: "",
+            createdAt = createdAt!!,
+            updatedAt = updatedAt!!,
+            status = status,
+            needsApprovalBy = needsApprovalBy,
+            approvedBy = approvedBy,
+            rejectedBy = rejectedBy,
+            postedBy = userName
+        )
 
     private fun List<PaymentFile>.toResponse(
         needsApprovalBy: List<String>,

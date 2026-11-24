@@ -36,6 +36,24 @@ data class UserPaymentFileResponse(
     val rejectedBy: List<String>,
 )
 
+data class UserPaymentFileExtended(
+    val id: Long,
+    val reason: String,
+    val createdAt: Instant,
+    val updatedAt: Instant,
+    val status: Status,
+    val needsApprovalBy: List<String>,
+    val approvedBy: List<String>,
+    val rejectedBy: List<String>,
+    val postedBy: String
+)
+
+
+data class VetoPayment(
+    val expenseId: Long,
+    val comment: String?
+)
+
 data class UserPaymentFileResponseWithDecision(
     val id: Long,
     val reason: String,
@@ -53,7 +71,7 @@ data class PaymentFileDownload(
     val resource: FileSystemResource
 )
 
-data class PaymentFileResponseFull
-(
+// data class PaymentFileResponseFull
+// (
     
-)
+// )
