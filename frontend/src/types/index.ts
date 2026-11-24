@@ -91,11 +91,10 @@ export interface Payment {
   needsApprovalBy: string[];
   approvedBy: string[];
   rejectedBy: string[];
-  userName: string
+  userName: string;
 }
 
-export interface DecisionPayments extends Payment
-{
+export interface DecisionPayments extends Payment {
   personalStatus: Status;
 }
 export interface BasePayment {
@@ -116,16 +115,14 @@ export interface PastPayment extends BasePayment {
   status: Status;
 }
 
-export interface PaymentToDecide extends BasePayment
-{
-  userName: string
+export interface PaymentToDecide extends BasePayment {
+  userName: string;
 }
 
-export interface PaymentDecided extends BasePayment
-{
-  userName: string
-  status: Status
-  personalStatus: Status
+export interface PaymentDecided extends BasePayment {
+  userName: string;
+  status: Status;
+  personalStatus: Status;
 }
 
 export interface Tab {
@@ -137,4 +134,14 @@ export interface Tab {
 export interface UserProps {
   currentUser: User;
   extraOptions: boolean;
+}
+
+//Type is safe as 1/2 cuz I only have 2
+//If this grows, the type must be changged to either
+//String or enum or function call or whatever
+//Depending on the need 
+export interface BoxProps {
+  expId: number;
+  decision: Status;
+  type: number;
 }

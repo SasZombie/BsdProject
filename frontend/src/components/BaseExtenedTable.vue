@@ -70,8 +70,8 @@ const emit = defineEmits<{
                             class="whitespace-nowrap px-6 py-4 font-mono text-nuxtGreen">
                             <div v-if="header === 'action'" >
                                 <div v-if="!extra" class="flex items-center gap-2">
-                                    <BaseButton @click="emit('action', rowIndex, 'APPROVED', 1)" text="Approve" />
-                                    <BaseButton @click="emit('action', rowIndex, 'REJECTED', 1)" text="Reject" />
+                                    <BaseButton class="border-nuxtGreen bg-nuxtGreen/20 text-white" @click="emit('action', rowIndex, 'APPROVED', 1)" text="Approve" />
+                                    <BaseButton class="" @click="emit('action', rowIndex, 'REJECTED', 1)" text="Reject" />
                                 </div>
                                 <div v-else>
                                     <BaseButton @click="emit('action', rowIndex, 'VETOED', 2)" text="Veto"/>

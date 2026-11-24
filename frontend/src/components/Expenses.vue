@@ -7,6 +7,8 @@ import BaseButton from './BaseButton.vue';
 import BaseNavigation from './BaseNavigation.vue';
 import BasePlainTable from './BasePlainTable.vue';
 import BaseExtenedTable from './BaseExtenedTable.vue';
+import BaseConfirmBox from './BaseConfirmBox.vue';
+
 import { currentUser } from '../composables/useAuth.ts';
 
 const props = defineProps<UserProps>()
@@ -195,32 +197,6 @@ onMounted(async () => {
   <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
 
 
-  <Teleport to="body">
-    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0"
-      enter-to-class="opacity-100" leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
-      leave-to-class="opacity-0">
-      <div v-if="pendingAction"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
-        @click.self="cancelAction">
-        <div class="w-full max-w-sm rounded-xl border border-slate-800 bg-nuxtBlack p-6 shadow-2xl">
-          <h3 class="text-base font-semibold text-white">
-            Confirm {{ pendingAction.decision }}
-          </h3>
+  <BaseConfirmBox @submit="handleSentAction" @cancel="cancelAction" :pendingAction="pendingAction" />
 
-          <p class="mt-2 text-sm text-slate-400">
-            Are you sure you want to mark the expense as {{ pendingAction.decision }}
-          </p>
-
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" @click="cancelAction"
-              class="px-3.5 py-2 text-sm rounded-lg text-slate-400 hover:text-white transition cursor-pointer">
-              Cancel
-            </button>
-
-            <BaseButton @click="handleSentAction" :text="`Yes`" />
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
 </template>
