@@ -1,7 +1,6 @@
 package com.multisig.master.dto
 
 import com.multisig.master.model.Status
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import org.springframework.core.io.FileSystemResource
 import org.springframework.web.multipart.MultipartFile
@@ -26,12 +25,15 @@ data class DecidePaymentFile(
     val comment: String?
 )
 
-data class UserPaymentFileUploadResponse(
+data class UserPaymentFileResponse(
     val id: Long,
     val reason: String,
     val createdAt: Instant,
     val updatedAt: Instant,
     val status: Status,
+    val needsApprovalBy: List<String>,
+    val approvedBy: List<String>,
+    val rejectedBy: List<String>,
 )
 
 data class UserPaymentFileResponseWithDecision(
@@ -40,7 +42,8 @@ data class UserPaymentFileResponseWithDecision(
     val createdAt: Instant,
     val updatedAt: Instant,
     val status: Status,
-    val personalDecision: Status
+    val personalStatus: Status,
+    val userName: String
 )
 
 data class PaymentFileDownload(
@@ -48,4 +51,9 @@ data class PaymentFileDownload(
     val fileName: String,
     val fileSize: Long,
     val resource: FileSystemResource
+)
+
+data class PaymentFileResponseFull
+(
+    
 )

@@ -19,6 +19,12 @@ interface PaymentFileRepository : JpaRepository<PaymentFile, Long> {
         """)
     fun findPendingPaymentFilesByUserId(@Param("userId") userId: Long, @Param("status") status: Status = Status.PENDING): List<PaymentFile>
     
+    @Query("""
+        SELECT ed.paymentFile 
+        FROM PaymentFileDecisions ed 
+        WHERE ed.user.id = :userId 
+        """)
+    fun findPaymentFilesByUserId(@Param("userId") userId: Long): List<PaymentFile>
     
      @Query("""
         SELECT pf.paymentFile 

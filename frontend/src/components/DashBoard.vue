@@ -69,13 +69,13 @@ const { logOut }  = useAuth()
 
         <!-- Payments -->
         <KeepAlive>
-            <Payments v-if="activeTab === 'payments' && renderLogic.renderPayments" :current-user="currentUser!!"
+            <Payments v-if="activeTab === 'payments'" :current-user="currentUser!!"
                 :extra-options="true" />
         </KeepAlive>
 
         <!-- Admin Options -->
         <KeepAlive>
-            <Admin v-if="activeTab === 'admin' && renderLogic.renderAdmin" :current-user="currentUser!!"
+            <Admin v-if="activeTab === 'admin'" :current-user="currentUser!!"
                 :extra-options="true" />
         </KeepAlive>
 

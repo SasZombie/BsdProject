@@ -4,9 +4,8 @@ import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.PaymentFileDownload
 import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserPaymentFileResponseWithDecision
-import com.multisig.master.dto.UserPaymentFileUploadResponse
+import com.multisig.master.dto.UserPaymentFileResponse
 import com.multisig.master.event.PaymentFileApprovedEvent
-import com.multisig.master.model.Expense
 import com.multisig.master.model.PaymentFile
 import com.multisig.master.model.PaymentFileDecisions
 import com.multisig.master.model.Role
@@ -18,7 +17,6 @@ import com.multisig.master.repository.UserRepository
 import com.opencsv.CSVReaderHeaderAware
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.core.io.FileSystemResource
-import org.springframework.core.io.Resource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -47,15 +45,53 @@ class PaymentFileService(
     private var unkownCount = 0
 
     @Transactional(readOnly = true)
-    fun getAllPayments(id: String): List<UserPaymentFileUploadResponse> {
-        val array = paymentFileRepo.findAllByUserId(id.toLong())
-        return array.toResponse()
+    fun getAllPersonalPayments(id: String): List<UserPaymentFileResponse> {
+
+        val requests = paymentFileRepo.findAllByUserId(id.toLong())
+        if (requests.isEmpty()) return emptyList()
+
+        val requestIds = requests.mapNotNull { it.id }
+        //Map<ExpenseID -> ListOfExpenseDecisions>
+        val decisionsByRequestId = reqDecisionRepo.findAllByPaymentFileIdIn(requestIds)
+            .groupBy { it.paymentFile!!.id }
+
+        return requests.map { req ->
+            val decisions = decisionsByRequestId[req.id].orEmpty()
+            val (pendingDecisions, decidedDecisions) = decisions.partition { it.decision == Status.PENDING }
+            val (approvedBy, rejectedBy) = decidedDecisions.partition { it.decision == Status.APPROVED }
+                .let { (approved, denied) ->
+                    approved.map { it.user!!.name } to denied.map { it.user!!.name }
+                }
+
+            val pending = pendingDecisions.map { it.user!!.name }
+            req.toResponse(pending, approvedBy, rejectedBy = rejectedBy)
+        }
     }
 
     @Transactional(readOnly = true)
-    fun getPaymentsToDecide(id: String): List<UserPaymentFileUploadResponse> {
-        val array = paymentFileRepo.findPendingPaymentFilesByUserId(id.toLong())
-        return array.toResponse()
+    fun getPaymentsToDecide(id: String): List<UserPaymentFileResponseWithDecision> {
+        val userId = id.toLong()
+        val payments = paymentFileRepo.findPaymentFilesByUserId(userId)
+        if (payments.isEmpty()) return emptyList()
+
+        val expenseIds = payments.mapNotNull { it.id }
+        val decisionsByExpenseId: Map<Long, PaymentFileDecisions> = reqDecisionRepo
+            .findAllByUserIdAndPaymentFileIdIn(userId, expenseIds)
+            .associateBy { it.paymentFile!!.id!! }
+
+        return payments.map { expense ->
+            val decision = decisionsByExpenseId[expense.id]?.decision ?: Status.PENDING
+
+            UserPaymentFileResponseWithDecision(
+                id = expense.id!!,
+                reason = expense.description.orEmpty(),
+                createdAt = expense.createdAt!!,
+                updatedAt = expense.updatedAt!!,
+                status = expense.status,
+                personalStatus = decision,
+                userName = expense.user?.name.orEmpty()
+            )
+        }
     }
 
     @Transactional
@@ -116,7 +152,8 @@ class PaymentFileService(
             createdAt = initialReq.createdAt!!,
             updatedAt = Instant.now(),
             status = initialReq.status,
-            personalDecision = request.decision
+            personalStatus = request.decision,
+            userName = initialReq.user!!.name
         )
 
         return returned
@@ -194,7 +231,7 @@ class PaymentFileService(
     }
 
     @Transactional
-    fun upload(userId: Long, request: PaymentFileUploadRequest): UserPaymentFileUploadResponse {
+    fun upload(userId: Long, request: PaymentFileUploadRequest): UserPaymentFileResponse {
 
         //TODO: Maybe Validate File? At least the header I guess
         //TODO: Need a way of storing duplicates. Simplest is appending a file number
@@ -218,11 +255,11 @@ class PaymentFileService(
             status = Status.PENDING
         )
         val queerry = paymentFileRepo.save(newPayment)
-        decideApprovals(fileBytes, newPayment)
+        val usersThatMustApprove = decideApprovals(fileBytes, newPayment)
 
         Files.write(Path.of(path), fileBytes)
 
-        return queerry.toResponse()
+        return queerry.toResponse(usersThatMustApprove.map { user -> user.name }, emptyList(), emptyList())
     }
 
     private fun sumAmount(fileBytes: ByteArray): Long =
@@ -236,7 +273,7 @@ class PaymentFileService(
 
 
     @Transactional
-    private fun decideApprovals(bytes: ByteArray, paymentFile: PaymentFile) {
+    private fun decideApprovals(bytes: ByteArray, paymentFile: PaymentFile): List<User> {
 
         val dollars = sumAmount(bytes)
 
@@ -306,6 +343,7 @@ class PaymentFileService(
             reqDecisionRepo.save(newDecision)
         }
 
+        return usersThatMustApprove
     }
 
 
@@ -315,14 +353,26 @@ class PaymentFileService(
 
     // ExpenseCreateResponse
     //TODO: Update this to reflect approvals neededs
-    private fun PaymentFile.toResponse(): UserPaymentFileUploadResponse = UserPaymentFileUploadResponse(
-        id = id!!,
-        reason = description ?: "",
-        createdAt = createdAt!!,
-        updatedAt = updatedAt!!,
-        status = status
-    )
+    private fun PaymentFile.toResponse(
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): UserPaymentFileResponse =
+        UserPaymentFileResponse(
+            id = id!!,
+            reason = description ?: "",
+            createdAt = createdAt!!,
+            updatedAt = updatedAt!!,
+            status = status,
+            needsApprovalBy = needsApprovalBy,
+            approvedBy = approvedBy,
+            rejectedBy = rejectedBy
+        )
 
 
-    private fun List<PaymentFile>.toResponse(): List<UserPaymentFileUploadResponse> = this.map { it.toResponse() }
+    private fun List<PaymentFile>.toResponse(
+        needsApprovalBy: List<String>,
+        approvedBy: List<String>,
+        rejectedBy: List<String>
+    ): List<UserPaymentFileResponse> = this.map { it.toResponse(needsApprovalBy, approvedBy, rejectedBy) }
 }

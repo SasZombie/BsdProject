@@ -58,7 +58,6 @@ export interface PastExpsnse {
   rejectedBy: string[];
 }
 
-
 export interface ExtenedExpense {
   expense: Expense;
   user: BackEndUser;
@@ -89,6 +88,45 @@ export interface Payment {
   createdAt: Date;
   updatedAt: Date;
   status: Status;
+  needsApprovalBy: string[];
+  approvedBy: string[];
+  rejectedBy: string[];
+  userName: string
+  
+}
+
+export interface DecisionPayments extends Payment
+{
+  personalStatus: Status;
+}
+export interface BasePayment {
+  id: number;
+  reason: String;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ActivePayment extends BasePayment {
+  needsApprovalBy: string[];
+  approvedBy: string[];
+}
+
+export interface PastPayment extends BasePayment {
+  approvedBy: string[];
+  rejectedBy: string[];
+  status: Status;
+}
+
+export interface PaymentToDecide extends BasePayment
+{
+  userName: string
+}
+
+export interface PaymentDecided extends BasePayment
+{
+  userName: string
+  status: Status
+  personalStatus: Status
 }
 
 export interface Tab {

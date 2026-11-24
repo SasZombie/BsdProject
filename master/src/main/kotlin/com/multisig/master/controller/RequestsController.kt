@@ -7,7 +7,8 @@ import com.multisig.master.dto.PaymentFileUploadRequest
 import com.multisig.master.dto.UserExpenseResponse
 import com.multisig.master.dto.UserExpenseResponseExtened
 import com.multisig.master.dto.UserExpenseResponseWithDecision
-import com.multisig.master.dto.UserPaymentFileUploadResponse
+import com.multisig.master.dto.UserPaymentFileResponse
+import com.multisig.master.dto.UserPaymentFileResponseWithDecision
 import com.multisig.master.dto.VetoExpense
 import com.multisig.master.service.ExpensesService
 import com.multisig.master.service.PaymentFileService
@@ -87,7 +88,7 @@ class RequestsController(
     fun uploadExpenseFile(
         @RequestHeader("Authorization") authHeader: String,
         @Valid @ModelAttribute request: PaymentFileUploadRequest
-    ): ResponseEntity<UserPaymentFileUploadResponse> {
+    ): ResponseEntity<UserPaymentFileResponse> {
         val fileName = request.file.originalFilename
         val fileBytes = request.file.bytes
 
@@ -96,10 +97,18 @@ class RequestsController(
         val response = paymentFileService.upload(token.toLong(), request)
         return ResponseEntity.ok(response)
     }
+    
 
+    @GetMapping("/payments/personal")
+    fun getPaymentsFile(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileResponse>> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+
+        val expenses = paymentFileService.getAllPersonalPayments(token)
+        return ResponseEntity.ok(expenses)
+    }
 
     @GetMapping("/payments/toDecide")
-    fun getPaymentsToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileUploadResponse>> {
+    fun getPaymentsToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileResponseWithDecision>> {
         val token = authHeader.removePrefix("Bearer ").trim()
 
         val payment = paymentFileService.getPaymentsToDecide(token)
@@ -119,6 +128,25 @@ class RequestsController(
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${paymentFileDownload.fileName}\"")
             .header(HttpHeaders.CONTENT_LENGTH, paymentFileDownload.fileSize.toString())
             .body(paymentFileDownload.resource)
+    }
+    
+    
+    @PostMapping("/payments/decision")
+    fun decidePayment(
+        @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: DecideExpense
+    ): ResponseEntity<UserPaymentFileResponseWithDecision> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+
+        val created = paymentFileService.applyDecision(token, request)
+        return ResponseEntity.status(HttpStatus.OK).body(created)
+    }
+    
+    @GetMapping("/payments/all")
+    fun getAllPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+
+        val expenses = expensesService.getAllExpenses()
+        return ResponseEntity.ok(expenses)
     }
 
 }

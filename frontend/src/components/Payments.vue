@@ -48,9 +48,8 @@ getPaymentsToDecide(props.currentUser.token)
 
 </template> -->
 
-
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useExpenses } from '../composables/useExpenses';
 import type { Status, Tab, UserProps } from '../types';
 import BaseInput from './BaseInput.vue';
@@ -59,6 +58,7 @@ import BaseNavigation from './BaseNavigation.vue';
 import BasePlainTable from './BasePlainTable.vue';
 import BaseExtenedTable from './BaseExtenedTable.vue';
 import { currentUser } from '../composables/useAuth.ts';
+import { usePayments } from '../composables/usePayments.ts';
 
 const props = defineProps<UserProps>()
 
@@ -66,51 +66,58 @@ const props = defineProps<UserProps>()
 const reason = ref('I want money cuz I can');
 const ammountDollars = ref(67);
 
+
 const {
-  postExpense,
-  decideExpense,
-  vetoExpense,
+  getPersonalPayments,
+  getPaymentsToDecide,
+  activePersonalPayments,
+  postPayment,
+  handleFileChange, isUploading, selectedFile,
+  paymentsToDecide,
+  decidePayment,
+  pastPersonalPayments,
+  paymentsDecided,
+  vetoPayment,
   error,
-  loading,
-  getPersonalExpenses,
-  getExpensesDecisions,
-  activePersonalExpenses,
-  pastPersonalExpenses,
-  expensesToDecide,
-  expensesDecided,
-  getAllExpenses,
-  allExpenses,
-} = useExpenses();
+  allPayments,
+  getAllPayments
+
+} = usePayments()
 
 
-getPersonalExpenses(props.currentUser.token);
-getExpensesDecisions(props.currentUser.token);
-getAllExpenses(props.currentUser.token)
+const refresh = async () => {
+
+  await Promise.all([
+    getPersonalPayments(props.currentUser.token),
+    getPaymentsToDecide(props.currentUser.token),
+    getAllPayments(props.currentUser.token)
+  ]);
+}
 
 const currentTabs: Tab[] = [
   {
     id: 'activePersonal',
-    label: 'Active Personal Expenses',
+    label: 'Active Personal Payments',
     show: true
   },
   {
     id: 'pastPersonal',
-    label: 'Past Personal Expenses',
+    label: 'Past Personal Payments',
     show: true
   },
   {
     id: 'toDecide',
-    label: 'Active Expenses to Decide',
+    label: 'Active Payments to Decide',
     show: true
   },
   {
     id: 'pastToDecide',
-    label: 'Past expenses Decided',
+    label: 'Past Payments Decided',
     show: true
   },
   {
-    id: 'allExpenses',
-    label: 'All expenses done',
+    id: 'allPayments',
+    label: 'All payments done',
     show: true
   }
 ].filter((elem) => elem.show === true)
@@ -121,19 +128,19 @@ const activeTab = ref('activePersonal')
 const onAction = async (expense: number, decision: Status) => {
 
   console.log(expense)
-  const saved = [...expensesToDecide.value]
-  expensesToDecide.value = expensesToDecide.value.filter((num) => num.id !== expense)
+  const saved = [...paymentsToDecide.value]
+  paymentsToDecide.value = paymentsToDecide.value.filter((num) => num.id !== expense)
 
-  await decideExpense(currentUser.value!!.token, expense, decision)
+  await decidePayment(currentUser.value!!.token, expense, decision)
 
   if (error.value !== null) {
-    expensesToDecide.value = saved
+    paymentsToDecide.value = saved
   }
 }
 
 const onAllExpenses = async (expense: number) => {
 
-  await vetoExpense(currentUser.value!!.token, expense)
+  await vetoPayment(currentUser.value!!.token, expense)
 }
 
 const showButton = ref(false)
@@ -166,12 +173,13 @@ const onDecision = (index: number, decision: Status, type: number) => {
 
   let expId = 0
 
+  console.log(index)
   if (type === 1) {
     console.log("Sunt 1")
-    expId = expensesToDecide.value[index].id
+    expId = paymentsToDecide.value[index].id
 
   } else if (type === 2) {
-    expId = allExpenses.value[index].id
+    expId = allPayments.value[index].id
   }
 
   pendingAction.value = { expId, decision, type }
@@ -186,52 +194,54 @@ const handleSentAction = () => {
 
   pendingAction.value = null
 }
+
+onMounted(async () => {
+  await refresh()
+})
+
 </script>
 
 <template>
 
-  <BaseButton @click="handleShowButton" :text="buttonText" />
+  <div class="flex items-center justify-between">
+    <BaseButton @click="handleShowButton" :text="buttonText" />
 
+    <BaseButton @click="refresh" text="Refresh" />
+
+  </div>
   <div v-show="showButton">
-    <form @submit.prevent="postExpense(ammountDollars, reason, currentUser!!.token)"
-      class="flex flex-wrap items-center gap-2.5 max-w-2xl">
+    <form @submit.prevent="postPayment(currentUser!!.token)">
       <div class="px-1 py-2">
-        <h3 class="text-base font-semibold text-white tracking-wide">
-          New Expense
+        <h3 class="text-base font-semibold text-white tracking-wide mb-3">
+          New Payment
         </h3>
 
-      </div>
-      <div class="flex-1 min-w-[180px]">
-        <BaseInput v-model="reason" type="text" placeholder="Reason" />
-      </div>
+        <div class="flex items-center gap-3">
+          <div class="w-64">
+            <BaseInput type="file" @change="handleFileChange" />
+          </div>
 
-      <div class="w-33">
-        <BaseInput v-model="ammountDollars" type="number" placeholder="Amount ($)" />
-      </div>
+          <BaseButton text="Upload Receipt" type="submit" :disabled="isUploading || !selectedFile" />
+        </div>
 
-      <div class="">
-        <BaseButton text="Submit Request" :disabled="loading" type="submit" />
+        <p v-if="error" class="w-full text-xs text-red-400 mt-2">{{ error }}</p>
       </div>
-
-      <p v-if="error" class="w-full text-xs text-red-400 mt-1">{{ error }}</p>
     </form>
   </div>
-
-
 
   <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
 
   <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
 
-  <BasePlainTable v-if="activeTab === 'activePersonal'" :data="activePersonalExpenses" />
+  <BasePlainTable v-if="activeTab === 'activePersonal'" :data="activePersonalPayments" />
 
-  <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="pastPersonalExpenses" />
+  <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="pastPersonalPayments" /> 
 
-  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'toDecide'" :data="expensesToDecide" />
+  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'toDecide'" :data="paymentsToDecide" />
 
-  <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="expensesDecided" :extra="true" />
+  <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="paymentsDecided" :extra="true" /> 
 
-  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
+  <!-- <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allPayments'" :data="allExspenses" :extra="true" /> -->
 
 
   <Teleport to="body">

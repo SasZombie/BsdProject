@@ -1,14 +1,5 @@
 import type { Role } from "../types"
 
-// export type Role =
-//   | "EMPLOYEE"
-//   | "ADMIN"
-//   | "MANAGER"
-//   | "CEO"
-//   | "CFO"
-//   | "BOARD_DIRECTOR"
-//   | "ACCOUNTANT";
-
 export const useRoles = (userRole: Role) =>
 ({
 
