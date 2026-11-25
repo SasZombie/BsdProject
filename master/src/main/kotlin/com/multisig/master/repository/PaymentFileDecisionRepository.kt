@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository
 interface PaymentFileDecisionRepository : JpaRepository<PaymentFileDecisions, Long> {
 
     fun findByUserIdAndPaymentFileId(userId: Long, paymentFileId: Long): PaymentFileDecisions?
+    fun existsByUserIdAndPaymentFileId(userId: Long, paymentFileId: Long): Boolean
 
     fun findAllByPaymentFileId(paymentFileId: Long): List<PaymentFileDecisions>
 
@@ -18,6 +19,5 @@ interface PaymentFileDecisionRepository : JpaRepository<PaymentFileDecisions, Lo
 
     fun findAllByUserIdAndPaymentFileIdIn(userId: Long, paymentIds: List<Long>): List<PaymentFileDecisions>
     fun findAllByPaymentFileIdIn(payments: List<Long>): List<PaymentFileDecisions>           
-
 
 }

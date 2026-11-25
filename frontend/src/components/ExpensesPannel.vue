@@ -196,7 +196,6 @@ onMounted(async () => {
 
   <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allExpenses'" :data="allExpenses" :extra="true" />
 
-
   <BaseConfirmBox @submit="handleSentAction" @cancel="cancelAction" :pendingAction="pendingAction" />
 
 </template>

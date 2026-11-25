@@ -2,6 +2,7 @@
 
 import type { BoxProps } from '../types';
 import BaseButton from './BaseButton.vue';
+import BaseInput from './BaseInput.vue';
 
 
 defineProps<{
@@ -31,6 +32,8 @@ const emit = defineEmits<{
                     <p class="mt-2 text-sm text-slate-400">
                         Are you sure you want to mark it as {{ pendingAction.decision }}
                     </p>
+
+                    <BaseInput v-model="pendingAction.comment" placeholder="Comment(optional)" type="text" />
 
                     <div class="mt-6 flex justify-end gap-3">
                         <BaseButton type="button" @click="emit('cancel')" text="Cancel"/>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
-import Expenses from './Expenses.vue'
-import Payments from './Payments.vue'
-import Admin from './Admin.vue'
+import Expenses from './ExpensesPannel.vue'
+import Payments from './PaymentsPannel.vue'
+import Admin from './AdminPannel.vue'
 import { useRoles } from '../composables/useRoles.ts'
 import { currentUser, useAuth } from '../composables/useAuth'
 import BaseNavigation from './BaseNavigation.vue'

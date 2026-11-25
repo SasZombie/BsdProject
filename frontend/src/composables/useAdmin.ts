@@ -9,7 +9,7 @@ export const useAdmin = () => {
   const surname = ref("");
   const username = ref("");
   const password = ref("");
-  const reportsTo = ref("None");
+  const reportsTo = ref<string | null >(null);
   const selectedRole = ref<Role>("EMPLOYEE");
 
   const roles: Role[] = [
@@ -34,10 +34,10 @@ export const useAdmin = () => {
         },
       });
 
+      if (!res.ok) throw new Error("Cannot fetch users");
       const body = await res.json();
       allUsers.value = body;
 
-      if (!res.ok) throw new Error("Cannot fetch users");
     } catch (e: any) {
       errorCreation.value = e.message;
     }
@@ -58,7 +58,7 @@ export const useAdmin = () => {
         }),
       });
 
-      if (!res.ok) throw new Error("Cannot fetch users");
+      if (!res.ok) throw new Error("Cannot update users");
       const savedUser = await res.json();
 
       const index = allUsers.value.findIndex((u) => u.id === updatedUser.id);
@@ -98,11 +98,11 @@ export const useAdmin = () => {
           role: selectedRole.value,
         }),
       });
+      if (!res.ok) throw new Error("Erorrr connecting to server");
 
       const body = await res.json();
       console.log(body);
 
-      if (!res.ok) throw new Error("Erorrr");
 
       name.value = ""
       username.value = ""

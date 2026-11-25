@@ -224,7 +224,8 @@ class PaymentFileService(
         )
 
         val expense =
-            paymentFileRepo.findById(request.expenseId).orElseThrow { NoSuchElementException("This request doesnt exist") }
+            paymentFileRepo.findById(request.expenseId)
+                .orElseThrow { NoSuchElementException("This request doesnt exist") }
 
         expense.status = Status.VETOED
 
@@ -232,19 +233,38 @@ class PaymentFileService(
 
     @Transactional(readOnly = true)
     fun getFileToDownload(userId: Long, fileId: Long): PaymentFileDownload {
-        val querry = reqDecisionRepo.findByUserIdAndPaymentFileId(userId, fileId) ?: throw ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "This combination doesnt exist"
-        )
 
-        if (querry.paymentFile == null) {
+        val paymentFile = paymentFileRepo.findById(fileId)
+            .orElseThrow { throw ResponseStatusException(HttpStatus.NOT_FOUND, "Payment file not found") }
+
+        val isOwner = paymentFile.user!!.id == userId 
+
+        val hasDecisionAccess = if (!isOwner) {
+            reqDecisionRepo.existsByUserIdAndPaymentFileId(userId, fileId)
+        } else {
+            false
+        }
+
+        if (!isOwner && !hasDecisionAccess) {
             throw ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Cannot find this file"
+                HttpStatus.FORBIDDEN,
+                "You do not have permission to download this file"
             )
         }
 
-        val filePathString = querry.paymentFile!!.filePath
+        // val querry = reqDecisionRepo.findByUserIdAndPaymentFileId(userId, fileId) ?: throw ResponseStatusException(
+        //     HttpStatus.FORBIDDEN,
+        //     "This combination doesnt exist"
+        // )
+
+        // if (querry.paymentFile == null) {
+        //     throw ResponseStatusException(
+        //         HttpStatus.BAD_REQUEST,
+        //         "Cannot find this file"
+        //     )
+        // }
+
+        val filePathString = paymentFile!!.filePath
         val filePath = Paths.get(filePathString)
 
         val file = filePath.toFile()

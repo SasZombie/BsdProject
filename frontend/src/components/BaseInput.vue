@@ -16,6 +16,8 @@ defineProps<{
     </label>
 
     <input
+      spellcheck="false"
+      autocomplete="new-password"
       v-model="model"
       :type="type || 'text'"
       :placeholder="placeholder"

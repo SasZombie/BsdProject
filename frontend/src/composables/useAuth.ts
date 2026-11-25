@@ -19,10 +19,11 @@ export const useAuth = () => {
         body: JSON.stringify({ username, password: pass }),
       });
 
+      if (!res.ok) throw new Error("Invalid credentials");
+
       const body = await res.json();
       console.log(body);
 
-      if (!res.ok) throw new Error("Invalid credentials");
 
       currentUser.value = body;
 

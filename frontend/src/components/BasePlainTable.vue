@@ -1,13 +1,26 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed } from 'vue'
+import BaseButton from './BaseButton.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     data: T[]
-}>()
+    download?: boolean
+}>(),
+    {
+        download: false
+    })
+
 
 const headers = computed<string[]>(() => {
-    if (!props.data || props.data.length === 0) return []
-    return Object.keys(props.data[0])
+  if (!props.data || props.data.length === 0) return []
+  
+  const baseKeys = Object.keys(props.data[0])
+  const extraHeaders = []
+  if (props.download) {
+    extraHeaders.push('download')
+  }
+
+  return [...baseKeys, ...extraHeaders]
 })
 
 const formatHeader = (key: string): string => {
@@ -36,6 +49,9 @@ const formatCellValue = (val: any): string => {
 
     return String(val)
 }
+const emit = defineEmits<{
+    (e: 'download', item: T, index: number): void
+}>()
 
 </script>
 
@@ -54,10 +70,17 @@ const formatCellValue = (val: any): string => {
                 </thead>
 
                 <tbody class="divide-y divide-slate-800/60">
-                    <tr v-for="row in data" :key="row.id ?? row.reason" class="hover:transition-colors hover:bg-slate-800/30">
+                    <tr v-for="(row, rowIndex) in data" :key="row.id ?? row.reason"
+                        class="hover:transition-colors hover:bg-slate-800/30">
                         <td v-for="header in headers" :key="header"
                             class="whitespace-nowrap px-6 py-4 font-mono text-nuxtGreen">
-                            {{ formatCellValue(row[header]) ?? '-' }}
+
+                            <div v-if="header === 'download'">
+                                <BaseButton @click="emit('download', row, rowIndex)" text="Download" />
+                            </div>
+                            <div v-else>
+                                {{ formatCellValue(row[header]) ?? '-' }}
+                            </div>
                         </td>
                     </tr>
 

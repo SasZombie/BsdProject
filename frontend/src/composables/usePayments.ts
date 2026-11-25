@@ -56,19 +56,15 @@ export const usePayments = () => {
 
   const postPayment = async (token: string): Promise<void> => {
     if (!selectedFile.value) {
-      alert("Please select a file first");
       return;
     }
 
     isUploading.value = true;
 
-    console.log("AAA");
-
     const formData = new FormData();
     formData.append("file", selectedFile.value);
     formData.append("reason", "Reason e plm");
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/payments/upload", {
         method: "POST",
@@ -87,6 +83,7 @@ export const usePayments = () => {
       error.value = e.message;
     } finally {
       loading.value = false;
+      isUploading.value = false;
     }
   };
 
@@ -226,6 +223,7 @@ export const usePayments = () => {
     token: string,
     pay: number,
     decision: Status,
+    comment?: string
   ): Promise<void> => {
     console.log(token);
     try {
@@ -238,7 +236,7 @@ export const usePayments = () => {
         body: JSON.stringify({
           expenseId: pay,
           decision: decision,
-          comment: "Bla Bla Bla",
+          comment: comment ? comment : "",
         }),
       });
 
@@ -257,11 +255,11 @@ export const usePayments = () => {
 
   const downloadPayment = async (
     token: string,
-    pay: Payment,
+    pay: number,
   ): Promise<void> => {
     console.log(token);
     try {
-      const res = await fetch(`/api/v1/requests/payments/download/${pay.id}`, {
+      const res = await fetch(`/api/v1/requests/payments/download/${pay}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

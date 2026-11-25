@@ -5,17 +5,26 @@ import type { Status } from '../types/index.ts';
 
 const props = withDefaults(defineProps<{
     data: T[],
+    download?: boolean,
     extra?: boolean
 }>(),
     {
+        download: false,
         extra: false
     })
 
 const headers = computed<string[]>(() => {
     if (!props.data || props.data.length === 0) return []
-    return [...Object.keys(props.data[0]), 'action']
-})
 
+    const baseKeys = Object.keys(props.data[0])
+    const extraHeaders = ['action']
+
+    if (props.download) {
+        extraHeaders.push('download')
+    }
+
+    return [...baseKeys, ...extraHeaders]
+})
 
 const formatHeader = (key: string): string => {
     return key
@@ -45,7 +54,8 @@ const formatCellValue = (val: any): string => {
 }
 
 const emit = defineEmits<{
-    (e: 'action', index: number, action: Status, type: number): void
+    (e: 'action', index: number, action: Status, type: number): void,
+    (e: 'download', item: T, index: number): void
 }>()
 
 </script>
@@ -68,14 +78,19 @@ const emit = defineEmits<{
                     <tr v-for="(row, rowIndex) in data" :key="rowIndex" class="transition-colors hover:bg-slate-800/30">
                         <td v-for="header in headers" :key="header"
                             class="whitespace-nowrap px-6 py-4 font-mono text-nuxtGreen">
-                            <div v-if="header === 'action'" >
+                            <div v-if="header === 'action'">
                                 <div v-if="!extra" class="flex items-center gap-2">
-                                    <BaseButton class="border-nuxtGreen bg-nuxtGreen/20 text-white" @click="emit('action', rowIndex, 'APPROVED', 1)" text="Approve" />
-                                    <BaseButton class="" @click="emit('action', rowIndex, 'REJECTED', 1)" text="Reject" />
+                                    <BaseButton class="border-nuxtGreen bg-nuxtGreen/20 text-white"
+                                        @click="emit('action', rowIndex, 'APPROVED', 1)" text="Approve" />
+                                    <BaseButton class="" @click="emit('action', rowIndex, 'REJECTED', 1)"
+                                        text="Reject" />
                                 </div>
                                 <div v-else>
-                                    <BaseButton @click="emit('action', rowIndex, 'VETOED', 2)" text="Veto"/>
+                                    <BaseButton @click="emit('action', rowIndex, 'VETOED', 2)" text="Veto" />
                                 </div>
+                            </div>
+                            <div v-else-if="header === 'download'">
+                                <BaseButton @click="emit('download', row, rowIndex)" text="Download" />
                             </div>
                             <span v-else>
                                 {{ formatCellValue(row[header]) }}

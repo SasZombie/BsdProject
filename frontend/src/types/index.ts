@@ -94,9 +94,6 @@ export interface Payment {
   userName: string;
 }
 
-export interface DecisionPayments extends Payment {
-  personalStatus: Status;
-}
 export interface BasePayment {
   id: number;
   reason: String;
@@ -109,6 +106,9 @@ export interface ActivePayment extends BasePayment {
   approvedBy: string[];
 }
 
+export interface DecisionPayments extends Payment {
+  personalStatus: Status;
+}
 export interface PastPayment extends BasePayment {
   approvedBy: string[];
   rejectedBy: string[];
@@ -144,4 +144,5 @@ export interface BoxProps {
   expId: number;
   decision: Status;
   type: number;
+  comment?: string;
 }

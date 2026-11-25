@@ -25,6 +25,7 @@ const {
   vetoPayment,
   error,
   allPayments,
+  downloadPayment,
   getAllPayments
 
 } = usePayments()
@@ -76,7 +77,7 @@ const onAction = async (expense: number, decision: Status) => {
   const saved = [...paymentsToDecide.value]
   paymentsToDecide.value = paymentsToDecide.value.filter((num) => num.id !== expense)
 
-  await decidePayment(currentUser.value!!.token, expense, decision)
+  await decidePayment(currentUser.value!!.token, expense, decision, pendingAction.value?.comment)
 
   if (error.value !== null) {
     paymentsToDecide.value = saved
@@ -103,7 +104,6 @@ const handleShowButton = () => {
 }
 
 
-
 const pendingAction = ref<BoxProps | null>(null)
 
 const cancelAction = () => {
@@ -123,7 +123,7 @@ const onDecision = (index: number, decision: Status, type: number) => {
     expId = allPayments.value[index].id
   }
 
-  pendingAction.value = { expId, decision, type }
+  pendingAction.value = { expId, decision, type}
 }
 
 const handleSentAction = () => {
@@ -139,6 +139,13 @@ const handleSentAction = () => {
 onMounted(async () => {
   await refresh()
 })
+
+const handleDownload = async (item: { id: number }) => {
+  
+  downloadPayment(currentUser.value!!.token, item.id)
+
+  console.log(item.id)
+}
 
 </script>
 
@@ -174,15 +181,15 @@ onMounted(async () => {
 
   <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
 
-  <BasePlainTable v-if="activeTab === 'activePersonal'" :data="activePersonalPayments" />
+  <BasePlainTable @download="handleDownload" :download="true" v-if="activeTab === 'activePersonal'" :data="activePersonalPayments" />
 
-  <BasePlainTable v-if="activeTab === 'pastPersonal'" :data="pastPersonalPayments" /> 
+  <BasePlainTable @download="handleDownload" :download="true" v-if="activeTab === 'pastPersonal'" :data="pastPersonalPayments" /> 
 
-  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'toDecide'" :data="paymentsToDecide" />
+  <BaseExtenedTable @download="handleDownload" :download="true" @action="onDecision" v-if="activeTab === 'toDecide'" :data="paymentsToDecide" />
 
-  <BaseExtenedTable v-if="activeTab === 'pastToDecide'" :data="paymentsDecided" :extra="true" /> 
+  <BaseExtenedTable @download="handleDownload" :download="true" v-if="activeTab === 'pastToDecide'" :data="paymentsDecided" :extra="true" /> 
 
-  <BaseExtenedTable @action="onDecision" v-if="activeTab === 'allPayments'" :data="allPayments" :extra="true" />
+  <BaseExtenedTable @download="handleDownload" :download="true"  @action="onDecision" v-if="activeTab === 'allPayments'" :data="allPayments" :extra="true" />
 
   <BaseConfirmBox @submit="handleSentAction" @cancel="cancelAction" :pendingAction="pendingAction" />
 
