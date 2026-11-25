@@ -23,7 +23,6 @@ class AdminService {
         val list = logFile.useLines { lines ->
             lines.drop(lastLine).toList()
         }
-
         //NU VREAU EU SA FIE +=
         //CINE ESTI TU SA IMI SCHIMBI
         //MIE CODUL

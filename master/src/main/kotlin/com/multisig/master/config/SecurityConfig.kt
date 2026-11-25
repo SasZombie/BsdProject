@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
@@ -17,9 +18,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 class SecurityConfig {
 
-    //TODO: I preffer argon2
     @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+    fun passwordEncoder(): Argon2PasswordEncoder
+    {
+        return Argon2PasswordEncoder (16, 32, 1, 65536, 3)
+    }
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
@@ -33,8 +36,8 @@ class SecurityConfig {
         source.registerCorsConfiguration("/**", config)
         return source
     }
-    
-    
+
+
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
@@ -43,7 +46,7 @@ class SecurityConfig {
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth.anyRequest().permitAll()
-                    // .requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated()
+                // .requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated()
             }
 
         return http.build()

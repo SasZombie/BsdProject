@@ -7,6 +7,7 @@ import com.multisig.master.dto.UserUpdateRequest
 import com.multisig.master.model.User
 import com.multisig.master.repository.UserRepository
 import org.springframework.http.HttpStatus
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
@@ -14,7 +15,10 @@ import java.time.Instant
 import kotlin.jvm.optionals.getOrElse
 
 @Service
-class UserService(private val userRepository: UserRepository) {
+class UserService(
+    private val userRepository: UserRepository,
+    private val passwordEncoder: Argon2PasswordEncoder
+) {
     @Transactional(readOnly = true)
     fun getUserById(id: Long): UserLogInResponse {
         val user = userRepository.findById(id).orElseThrow {
@@ -75,7 +79,9 @@ class UserService(private val userRepository: UserRepository) {
         return userRepository.save(newUser).toBackendResponse()
     }
 
-    private fun hashPassword(password: String): String = password
+    private fun hashPassword(password: String): String {
+        return passwordEncoder.encode(password)!!
+    }
 
     private fun User.toResponse() = UserLogInResponse(
         token = this.id.toString(),
