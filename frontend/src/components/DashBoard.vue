@@ -7,7 +7,7 @@ import { useRoles } from '../composables/useRoles.ts'
 import { currentUser, useAuth } from '../composables/useAuth'
 import BaseNavigation from './BaseNavigation.vue'
 import type { Tab } from '../types/index.ts'
-import { ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import BaseButton from './BaseButton.vue'
 
 const renderLogic = useRoles(currentUser.value!.role)
@@ -34,8 +34,21 @@ const currentTabs: Tab[] = [
 
 const activeTab = ref('expenses')
 
-const { logOut }  = useAuth()
+const { logOut, refreshToken }  = useAuth()
 
+const INTERVAL_MS = 15 * 60 * 1000 
+let timerId: number | null = null
+
+onMounted(() =>
+{
+    timerId = setInterval(refreshToken, INTERVAL_MS)
+})
+
+onUnmounted(() => {
+  if (timerId) {
+    clearInterval(timerId)
+  }
+})
 
 </script>
 

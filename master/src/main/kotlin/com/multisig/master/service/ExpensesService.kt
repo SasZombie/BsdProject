@@ -32,8 +32,8 @@ class ExpensesService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getAllPersonalExpenses(id: String): List<UserExpenseResponse> {
-        val requests = requestsRepo.findAllByUserId(id.toLong())
+    fun getAllPersonalExpenses(id: Long): List<UserExpenseResponse> {
+        val requests = requestsRepo.findAllByUserId(id)
         if (requests.isEmpty()) return emptyList()
 
         val requestIds = requests.mapNotNull { it.id }
@@ -54,7 +54,7 @@ class ExpensesService(
         }
     }
     @Transactional
-    fun veto(request: VetoExpense)
+    fun veto(userId: Long, request: VetoExpense)
     {
         println("This veto function is deeply integrated with the payment system" + 
                 "that is not implemented, so I will also skip the boilerplate")
@@ -90,8 +90,8 @@ class ExpensesService(
     }
 
     @Transactional(readOnly = true)
-    fun getExpensesDecisions(id: String): List<UserExpenseResponseWithDecision> {
-        val userId = id.toLong()
+    fun getExpensesDecisions(userId: Long): List<UserExpenseResponseWithDecision> {
+
         val expenses = requestsRepo.findExpensesByUserId(userId)
         if (expenses.isEmpty()) return emptyList()
 
@@ -117,7 +117,7 @@ class ExpensesService(
     }
 
     @Transactional
-    fun applyDecision(id: String, request: DecideExpense): UserExpenseResponseWithDecision {
+    fun applyDecision(id: Long, request: DecideExpense): UserExpenseResponseWithDecision {
 
         if (request.decision == Status.PENDING) {
             throw ResponseStatusException(
@@ -126,7 +126,7 @@ class ExpensesService(
             )
         }
 
-        val decisionQuerry = reqDecisionRepo.findByUserIdAndExpenseId(id.toLong(), request.expenseId)
+        val decisionQuerry = reqDecisionRepo.findByUserIdAndExpenseId(id, request.expenseId)
             ?: throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "Combination $id and ${request.expenseId} not found"
@@ -181,9 +181,9 @@ class ExpensesService(
     }
 
     @Transactional
-    fun create(request: ExpenseCreateRequest): UserExpenseResponse {
+    fun create(userId: Long, request: ExpenseCreateRequest): UserExpenseResponse {
 
-        val userProxy = userRepo.getReferenceById(request.userId)
+        val userProxy = userRepo.getReferenceById(userId)
 
         val newExpense = Expense(
             user = userProxy,

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/payments")
 class PaymentController(private val paymentService: PaymentService) {
 
-    //TODO: Add Auth
+    //TODO: Add Haldint to Front-End
     @PostMapping("/enable")
     fun enable(@RequestHeader("Authorization") authHeader: String) {
         paymentService.toggleService(true)

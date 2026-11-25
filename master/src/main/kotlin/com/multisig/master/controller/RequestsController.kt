@@ -1,5 +1,6 @@
 package com.multisig.master.controller
 
+import com.multisig.master.config.annotation.CurrentUser
 import jakarta.validation.Valid
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.ExpenseCreateRequest
@@ -39,57 +40,54 @@ class RequestsController(
 ) {
 
     @PostMapping("/expense/create")
-    fun createExpense(@Valid @RequestBody request: ExpenseCreateRequest): ResponseEntity<UserExpenseResponse> {
+    fun createExpense(
+        @CurrentUser userId: Long,
+        @Valid @RequestBody request: ExpenseCreateRequest
+    ): ResponseEntity<UserExpenseResponse> {
 
         log.info { "Creating expense, request by user" }
 
-
-        val created = expensesService.create(request)
+        val created = expensesService.create(userId, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
 
     @PostMapping("/expense/veto")
     fun vetoExpense(
-        @Valid @RequestHeader("Authorization") authHeader: String,
+        @CurrentUser userId: Long,
         @Valid @RequestBody request: VetoExpense
     ): ResponseEntity<String> {
-        val token = authHeader.removePrefix("Bearer ").trim()
 
-        val created = expensesService.veto(request)
+        val created = expensesService.veto(userId, request)
         return ResponseEntity.ok("Vetoed")
     }
 
     @GetMapping("/expense/personal")
-    fun getExpenses(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponse>> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+    fun getExpenses(@CurrentUser userId: Long): ResponseEntity<List<UserExpenseResponse>> {
 
-        val expenses = expensesService.getAllPersonalExpenses(token)
+        val expenses = expensesService.getAllPersonalExpenses(userId)
         return ResponseEntity.ok(expenses)
     }
 
     @GetMapping("/expense/all")
-    fun getAllExpenses(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+    fun getAllExpenses(): ResponseEntity<List<UserExpenseResponseExtened>> {
 
         val expenses = expensesService.getAllExpenses()
         return ResponseEntity.ok(expenses)
     }
 
     @GetMapping("/expense/decisions")
-    fun getExpenseDecisions(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseWithDecision>> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+    fun getExpenseDecisions(@CurrentUser userId: Long): ResponseEntity<List<UserExpenseResponseWithDecision>> {
 
-        val expenses = expensesService.getExpensesDecisions(token)
+        val expenses = expensesService.getExpensesDecisions(userId)
         return ResponseEntity.ok(expenses)
     }
 
     @PostMapping("/expense/decision")
     fun decideExpense(
-        @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: DecideExpense
+        @CurrentUser userId: Long, @Valid @RequestBody request: DecideExpense
     ): ResponseEntity<UserExpenseResponseWithDecision> {
-        val token = authHeader.removePrefix("Bearer ").trim()
 
-        val created = expensesService.applyDecision(token, request)
+        val created = expensesService.applyDecision(userId, request)
         return ResponseEntity.status(HttpStatus.OK).body(created)
     }
 
@@ -98,44 +96,39 @@ class RequestsController(
         consumes = [MediaType.MULTIPART_FORM_DATA_VALUE]
     )
     fun uploadExpenseFile(
-        @RequestHeader("Authorization") authHeader: String,
+        @CurrentUser userId: Long,
         @Valid @ModelAttribute request: PaymentFileUploadRequest
     ): ResponseEntity<UserPaymentFileResponse> {
         val fileName = request.file.originalFilename
         val fileBytes = request.file.bytes
 
-        val token = authHeader.removePrefix("Bearer ").trim()
-
-        val response = paymentFileService.upload(token.toLong(), request)
+        val response = paymentFileService.upload(userId, request)
         return ResponseEntity.ok(response)
     }
 
 
     @GetMapping("/payments/personal")
-    fun getPaymentsFile(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileResponse>> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+    fun getPaymentsFile(@CurrentUser userId: Long): ResponseEntity<List<UserPaymentFileResponse>> {
 
-        val expenses = paymentFileService.getAllPersonalPayments(token)
+        val expenses = paymentFileService.getAllPersonalPayments(userId)
         return ResponseEntity.ok(expenses)
     }
 
     @GetMapping("/payments/toDecide")
-    fun getPaymentsToDecide(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileResponseWithDecision>> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+    fun getPaymentsToDecide(@CurrentUser userId: Long): ResponseEntity<List<UserPaymentFileResponseWithDecision>> {
 
-        val payment = paymentFileService.getPaymentsToDecide(token)
+        val payment = paymentFileService.getPaymentsToDecide(userId)
         return ResponseEntity.ok(payment)
     }
 
 
     @GetMapping("/payments/download/{id}")
     fun getPaymentFile(
-        @RequestHeader("Authorization") authHeader: String,
+        @CurrentUser userId: Long,
         @PathVariable id: Long
     ): ResponseEntity<Resource> {
-        val token = authHeader.removePrefix("Bearer ").trim()
 
-        val paymentFileDownload = paymentFileService.getFileToDownload(token.toLong(), id)
+        val paymentFileDownload = paymentFileService.getFileToDownload(userId, id)
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(paymentFileDownload.contentType))
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"${paymentFileDownload.fileName}\"")
             .header(HttpHeaders.CONTENT_LENGTH, paymentFileDownload.fileSize.toString())
@@ -145,17 +138,15 @@ class RequestsController(
 
     @PostMapping("/payments/decision")
     fun decidePayment(
-        @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: DecideExpense
+        @CurrentUser userId: Long, @Valid @RequestBody request: DecideExpense
     ): ResponseEntity<UserPaymentFileResponseWithDecision> {
-        val token = authHeader.removePrefix("Bearer ").trim()
 
-        val created = paymentFileService.applyDecision(token, request)
+        val created = paymentFileService.applyDecision(userId, request)
         return ResponseEntity.status(HttpStatus.OK).body(created)
     }
 
     @GetMapping("/payments/all")
-    fun getAllPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileExtended>> {
-        val token = authHeader.removePrefix("Bearer ").trim()
+    fun getAllPayments(): ResponseEntity<List<UserPaymentFileExtended>> {
 
         val expenses = paymentFileService.getAllExpenses()
         return ResponseEntity.ok(expenses)
@@ -164,10 +155,9 @@ class RequestsController(
 
     @PostMapping("/payments/veto")
     fun vetoPayment(
-        @Valid @RequestHeader("Authorization") authHeader: String,
+        @CurrentUser userId: Long,
         @Valid @RequestBody request: VetoPayment
     ): ResponseEntity<String> {
-        val token = authHeader.removePrefix("Bearer ").trim()
 
         val created = paymentFileService.veto(request)
         return ResponseEntity.ok("Vetoed")

@@ -6,11 +6,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.time.Instant
 
-data class ExpenseCreateRequest(
-    
-    @field:NotNull(message = "Cannot have blank Id")
-    val userId: Long,
-    
+data class ExpenseCreateRequest( 
     @field:NotNull(message = "Ammount cannot be blank")
     @field:Min(value = 1 , message = "Ammount cant be 0")
     val ammountDollars: Long,

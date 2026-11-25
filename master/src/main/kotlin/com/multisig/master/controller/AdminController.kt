@@ -1,5 +1,6 @@
 package com.multisig.master.controller
 
+import com.multisig.master.config.annotation.CurrentUser
 import com.multisig.master.service.AdminService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.ResponseEntity
@@ -16,7 +17,8 @@ class AdminController(private val adminService: AdminService) {
 
     
     @GetMapping("/logs")
-    fun getLogLine(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<String>> {
+    fun getLogLine(@CurrentUser userId: Long): ResponseEntity<List<String>> {
+        
         val newLogs = adminService.getNewLogs()
         return ResponseEntity.ok(newLogs)
     }

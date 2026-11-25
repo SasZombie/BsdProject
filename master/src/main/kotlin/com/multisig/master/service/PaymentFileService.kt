@@ -47,9 +47,9 @@ class PaymentFileService(
     private var unkownCount = 0
 
     @Transactional(readOnly = true)
-    fun getAllPersonalPayments(id: String): List<UserPaymentFileResponse> {
+    fun getAllPersonalPayments(id: Long): List<UserPaymentFileResponse> {
 
-        val requests = paymentFileRepo.findAllByUserId(id.toLong())
+        val requests = paymentFileRepo.findAllByUserId(id)
         if (requests.isEmpty()) return emptyList()
 
         val requestIds = requests.mapNotNull { it.id }
@@ -95,8 +95,7 @@ class PaymentFileService(
     }
 
     @Transactional(readOnly = true)
-    fun getPaymentsToDecide(id: String): List<UserPaymentFileResponseWithDecision> {
-        val userId = id.toLong()
+    fun getPaymentsToDecide(userId: Long): List<UserPaymentFileResponseWithDecision> {
         val payments = paymentFileRepo.findPaymentFilesByUserId(userId)
         if (payments.isEmpty()) return emptyList()
 
@@ -121,7 +120,7 @@ class PaymentFileService(
     }
 
     @Transactional
-    fun applyDecision(id: String, request: DecideExpense): UserPaymentFileResponseWithDecision {
+    fun applyDecision(id: Long, request: DecideExpense): UserPaymentFileResponseWithDecision {
 
         if (request.decision == Status.PENDING) {
             throw ResponseStatusException(
@@ -130,7 +129,7 @@ class PaymentFileService(
             )
         }
 
-        val decisionQuerry = reqDecisionRepo.findByUserIdAndPaymentFileId(id.toLong(), request.expenseId)
+        val decisionQuerry = reqDecisionRepo.findByUserIdAndPaymentFileId(id, request.expenseId)
             ?: throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "Combination $id and ${request.expenseId} not found"

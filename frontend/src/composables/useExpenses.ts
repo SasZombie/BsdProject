@@ -22,16 +22,14 @@ export const useExpenses = () => {
 
   const allExpenses = ref<Expense[]>([]);
 
-
-  const reset = () =>
-  {
-    activePersonalExpenses.value = []
-    pastPersonalExpenses.value = []
-    expensesDecided.value = []
-    expensesToDecide.value = []
-    allExpenses.value = []
-    extenedExpenses.value = []
-  }
+  const reset = () => {
+    activePersonalExpenses.value = [];
+    pastPersonalExpenses.value = [];
+    expensesDecided.value = [];
+    expensesToDecide.value = [];
+    allExpenses.value = [];
+    extenedExpenses.value = [];
+  };
 
   const postExpense = async (
     ammountDollars: number,
@@ -44,9 +42,11 @@ export const useExpenses = () => {
     try {
       const res = await fetch("/api/v1/requests/expense/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          userId: token,
           ammountDollars: ammountDollars,
           reason: reason,
         }),
@@ -54,7 +54,7 @@ export const useExpenses = () => {
       if (!res.ok) throw new Error("Invalid credentials");
 
       const body: Expense = await res.json();
-      body.postedBy = currentUser.value!!.name
+      body.postedBy = currentUser.value!!.name;
 
       activePersonalExpenses.value.push(body);
       allExpenses.value.push(body);
@@ -80,10 +80,8 @@ export const useExpenses = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
       const body: Expense[] = await res.json();
-      const temp1: ActiveExpense[] = []
+      const temp1: ActiveExpense[] = [];
       const temp2: PastExpsnse[] = [];
-
-
 
       for (const e of body) {
         if (e.status === "PENDING") {
@@ -110,9 +108,8 @@ export const useExpenses = () => {
         }
       }
 
-      activePersonalExpenses.value = temp1
-      pastPersonalExpenses.value = temp2
-
+      activePersonalExpenses.value = temp1;
+      pastPersonalExpenses.value = temp2;
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -137,8 +134,8 @@ export const useExpenses = () => {
 
       const body: ExpensesDecided[] = await res.json();
 
-      const temp1: ExpenseForm[] = []
-      const temp2: ExpensesDecided[] = []
+      const temp1: ExpenseForm[] = [];
+      const temp2: ExpensesDecided[] = [];
 
       for (const item of body) {
         if (item.status === "PENDING") {
@@ -163,9 +160,8 @@ export const useExpenses = () => {
         }
       }
 
-      expensesToDecide.value = temp1
-      expensesDecided.value = temp2
-
+      expensesToDecide.value = temp1;
+      expensesDecided.value = temp2;
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -189,7 +185,7 @@ export const useExpenses = () => {
       if (!res.ok) throw new Error("Invalid credentials");
       extenedExpenses.value = await res.json();
 
-      const temp: Expense[] = []
+      const temp: Expense[] = [];
       for (const item of extenedExpenses.value) {
         temp.push({
           id: item.expense.id,
@@ -206,8 +202,7 @@ export const useExpenses = () => {
         });
       }
 
-      allExpenses.value = temp
-      
+      allExpenses.value = temp;
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -263,7 +258,6 @@ export const useExpenses = () => {
 
       const target = allExpenses.value.find((elem) => elem.id === exp);
       target && (target.status = "VETOED");
-
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -286,6 +280,6 @@ export const useExpenses = () => {
     allExpenses,
     getAllExpenses,
     extenedExpenses,
-    reset
+    reset,
   };
 };
