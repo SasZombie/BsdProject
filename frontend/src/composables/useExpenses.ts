@@ -41,7 +41,6 @@ export const useExpenses = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/expense/create", {
         method: "POST",
@@ -70,7 +69,6 @@ export const useExpenses = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/expense/personal", {
         method: "GET",
@@ -82,7 +80,6 @@ export const useExpenses = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
       const body: Expense[] = await res.json();
-      console.log(body);
       const temp1: ActiveExpense[] = []
       const temp2: PastExpsnse[] = [];
 
@@ -127,7 +124,6 @@ export const useExpenses = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/expense/decisions", {
         method: "GET",
@@ -181,7 +177,6 @@ export const useExpenses = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/expense/all", {
         method: "GET",
@@ -193,7 +188,6 @@ export const useExpenses = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
       extenedExpenses.value = await res.json();
-      console.log(extenedExpenses.value);
 
       const temp: Expense[] = []
       for (const item of extenedExpenses.value) {
@@ -267,7 +261,6 @@ export const useExpenses = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
 
-      console.log("AM trecut")
       const target = allExpenses.value.find((elem) => elem.id === exp);
       target && (target.status = "VETOED");
 

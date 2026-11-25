@@ -22,9 +22,6 @@ export const useAuth = () => {
       if (!res.ok) throw new Error("Invalid credentials");
 
       const body = await res.json();
-      console.log(body);
-
-
       currentUser.value = body;
 
       router.push("/dashboard");

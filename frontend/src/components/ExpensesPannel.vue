@@ -76,7 +76,6 @@ const activeTab = ref('activePersonal')
 
 const onAction = async (expense: number, decision: Status) => {
 
-  console.log(expense)
   const saved = [...expensesToDecide.value]
   expensesToDecide.value = expensesToDecide.value.filter((num) => num.id !== expense)
 
@@ -123,7 +122,6 @@ const onDecision = (index: number, decision: Status, type: number) => {
   let expId = 0
 
   if (type === 1) {
-    console.log("Sunt 1")
     expId = expensesToDecide.value[index].id
 
   } else if (type === 2) {

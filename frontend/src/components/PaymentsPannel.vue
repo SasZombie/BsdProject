@@ -73,7 +73,6 @@ const activeTab = ref('activePersonal')
 
 const onAction = async (expense: number, decision: Status) => {
 
-  console.log(expense)
   const saved = [...paymentsToDecide.value]
   paymentsToDecide.value = paymentsToDecide.value.filter((num) => num.id !== expense)
 
@@ -114,9 +113,7 @@ const onDecision = (index: number, decision: Status, type: number) => {
 
   let expId = 0
 
-  console.log(index)
   if (type === 1) {
-    console.log("Sunt 1")
     expId = paymentsToDecide.value[index].id
 
   } else if (type === 2) {
@@ -143,8 +140,6 @@ onMounted(async () => {
 const handleDownload = async (item: { id: number }) => {
   
   downloadPayment(currentUser.value!!.token, item.id)
-
-  console.log(item.id)
 }
 
 </script>

@@ -14,6 +14,7 @@ import com.multisig.master.dto.VetoExpense
 import com.multisig.master.dto.VetoPayment
 import com.multisig.master.service.ExpensesService
 import com.multisig.master.service.PaymentFileService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -28,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+private val log = KotlinLogging.logger {}
+
 @RestController
 @RequestMapping("/api/v1/requests")
 class RequestsController(
@@ -37,14 +40,21 @@ class RequestsController(
 
     @PostMapping("/expense/create")
     fun createExpense(@Valid @RequestBody request: ExpenseCreateRequest): ResponseEntity<UserExpenseResponse> {
+
+        log.info { "Creating expense, request by user" }
+
+
         val created = expensesService.create(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
-    
+
     @PostMapping("/expense/veto")
-    fun vetoExpense(@Valid @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: VetoExpense): ResponseEntity<String> {
+    fun vetoExpense(
+        @Valid @RequestHeader("Authorization") authHeader: String,
+        @Valid @RequestBody request: VetoExpense
+    ): ResponseEntity<String> {
         val token = authHeader.removePrefix("Bearer ").trim()
-        
+
         val created = expensesService.veto(request)
         return ResponseEntity.ok("Vetoed")
     }
@@ -56,7 +66,7 @@ class RequestsController(
         val expenses = expensesService.getAllPersonalExpenses(token)
         return ResponseEntity.ok(expenses)
     }
-    
+
     @GetMapping("/expense/all")
     fun getAllExpenses(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserExpenseResponseExtened>> {
         val token = authHeader.removePrefix("Bearer ").trim()
@@ -99,7 +109,7 @@ class RequestsController(
         val response = paymentFileService.upload(token.toLong(), request)
         return ResponseEntity.ok(response)
     }
-    
+
 
     @GetMapping("/payments/personal")
     fun getPaymentsFile(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileResponse>> {
@@ -131,8 +141,8 @@ class RequestsController(
             .header(HttpHeaders.CONTENT_LENGTH, paymentFileDownload.fileSize.toString())
             .body(paymentFileDownload.resource)
     }
-    
-    
+
+
     @PostMapping("/payments/decision")
     fun decidePayment(
         @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: DecideExpense
@@ -142,7 +152,7 @@ class RequestsController(
         val created = paymentFileService.applyDecision(token, request)
         return ResponseEntity.status(HttpStatus.OK).body(created)
     }
-    
+
     @GetMapping("/payments/all")
     fun getAllPayments(@RequestHeader("Authorization") authHeader: String): ResponseEntity<List<UserPaymentFileExtended>> {
         val token = authHeader.removePrefix("Bearer ").trim()
@@ -150,12 +160,15 @@ class RequestsController(
         val expenses = paymentFileService.getAllExpenses()
         return ResponseEntity.ok(expenses)
     }
-    
-    
+
+
     @PostMapping("/payments/veto")
-    fun vetoPayment(@Valid @RequestHeader("Authorization") authHeader: String, @Valid @RequestBody request: VetoPayment): ResponseEntity<String> {
+    fun vetoPayment(
+        @Valid @RequestHeader("Authorization") authHeader: String,
+        @Valid @RequestBody request: VetoPayment
+    ): ResponseEntity<String> {
         val token = authHeader.removePrefix("Bearer ").trim()
-        
+
         val created = paymentFileService.veto(request)
         return ResponseEntity.ok("Vetoed")
     }

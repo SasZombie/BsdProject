@@ -12,6 +12,7 @@ export const useAdmin = () => {
   const reportsTo = ref<string | null >(null);
   const selectedRole = ref<Role>("EMPLOYEE");
 
+  const logs = ref<string[]>([])
   const roles: Role[] = [
     "EMPLOYEE",
     "ADMIN",
@@ -43,8 +44,27 @@ export const useAdmin = () => {
     }
   };
 
+  const getNextLog = async (currentUser: User): Promise<void> => {
+    try {
+      const res = await fetch("/api/v1/admin/logs", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Cannot fetch logs");
+
+      const body: string[] = await res.json();
+      logs.value.push(...body)
+
+    } catch (e: any) {
+      errorCreation.value = e.message;
+    }
+  };
+
   const updateUser = async (currentUser: User, updatedUser: BackEndUser) => {
-    console.log(updatedUser.role);
     try {
       const res = await fetch(`/api/v1/users/update/${updatedUser.id}`, {
         method: "POST",
@@ -77,8 +97,6 @@ export const useAdmin = () => {
       return;
     }
     errorCreation.value = null;
-
-    console.log(reportsTo.value);
     try {
       const res = await fetch("/api/v1/users/create", {
         method: "POST",
@@ -101,7 +119,6 @@ export const useAdmin = () => {
       if (!res.ok) throw new Error("Erorrr connecting to server");
 
       const body = await res.json();
-      console.log(body);
 
 
       name.value = ""
@@ -129,8 +146,10 @@ export const useAdmin = () => {
     selectedRole,
     roles,
     allUsers,
+    logs,
     addUser,
     getAllUsers,
+    getNextLog,
     updateUser,
   };
 };

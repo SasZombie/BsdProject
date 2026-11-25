@@ -76,7 +76,6 @@ export const usePayments = () => {
 
       selectedFile.value = null;
       const body: Payment = await res.json();
-      console.log(body);
 
       activePersonalPayments.value.push(body);
     } catch (e: any) {
@@ -91,7 +90,6 @@ export const usePayments = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/payments/personal", {
         method: "GET",
@@ -104,7 +102,6 @@ export const usePayments = () => {
       if (!res.ok) throw new Error("Invalid credentials");
 
       const body: Payment[] = await res.json();
-      console.log(body);
       const temp1: ActivePayment[] = [];
       const temp2: PastPayment[] = [];
 
@@ -144,7 +141,6 @@ export const usePayments = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/payments/toDecide", {
         method: "GET",
@@ -197,7 +193,6 @@ export const usePayments = () => {
     loading.value = true;
     error.value = null;
 
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/payments/all", {
         method: "GET",
@@ -225,7 +220,6 @@ export const usePayments = () => {
     decision: Status,
     comment?: string
   ): Promise<void> => {
-    console.log(token);
     try {
       const res = await fetch("/api/v1/requests/payments/decision", {
         method: "POST",
@@ -241,7 +235,6 @@ export const usePayments = () => {
       });
 
       const body: PaymentDecided = await res.json();
-      console.log(body);
 
       paymentsDecided.value.push(body)
 
@@ -257,7 +250,6 @@ export const usePayments = () => {
     token: string,
     pay: number,
   ): Promise<void> => {
-    console.log(token);
     try {
       const res = await fetch(`/api/v1/requests/payments/download/${pay}`, {
         method: "GET",
