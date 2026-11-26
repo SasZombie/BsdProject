@@ -1,5 +1,6 @@
 package com.multisig.master.service
 
+import com.multisig.master.components.CSVFileCheker
 import com.multisig.master.dto.DecideExpense
 import com.multisig.master.dto.PaymentFileDownload
 import com.multisig.master.dto.PaymentFileUploadRequest
@@ -40,11 +41,13 @@ class PaymentFileService(
     private val paymentFileRepo: PaymentFileRepository,
     private val reqDecisionRepo: PaymentFileDecisionRepository,
     private val userRepo: UserRepository,
-    private val eventPublisher: ApplicationEventPublisher
+    private val eventPublisher: ApplicationEventPublisher,
+    private val csvEvaluator: CSVFileCheker
 ) {
 
     private val filesFolder = "files/"
     private var unkownCount = 0
+    private var filesCount = 0
 
     @Transactional(readOnly = true)
     fun getAllPersonalPayments(id: Long): List<UserPaymentFileResponse> {
@@ -188,13 +191,14 @@ class PaymentFileService(
         if (fileName == "EmptyFileName") {
             unkownCount += 1
 
-            return filesFolder + fileName + unkownCount
+            return filesFolder + unkownCount + fileName
         }
 
-        //TODO: This would benefit for more security!!!
+        //This would benefit for more security!!!
         val cleanFileName = fileName.substringAfterLast('/').removePrefix("/")
 
-        return filesFolder + cleanFileName
+        filesCount += 1
+        return filesFolder + filesCount + cleanFileName 
     }
 
     private fun saveFileAtPath(path: String, file: MultipartFile) {
@@ -236,7 +240,7 @@ class PaymentFileService(
         val paymentFile = paymentFileRepo.findById(fileId)
             .orElseThrow { throw ResponseStatusException(HttpStatus.NOT_FOUND, "Payment file not found") }
 
-        val isOwner = paymentFile.user!!.id == userId 
+        val isOwner = paymentFile.user!!.id == userId
 
         val hasDecisionAccess = if (!isOwner) {
             reqDecisionRepo.existsByUserIdAndPaymentFileId(userId, fileId)
@@ -292,10 +296,6 @@ class PaymentFileService(
 
     @Transactional
     fun upload(userId: Long, request: PaymentFileUploadRequest): UserPaymentFileResponse {
-
-        //TODO: Maybe Validate File? At least the header I guess
-        //TODO: Need a way of storing duplicates. Simplest is appending a file number
-        //Hardest is to: Search all files for duplication
         val userProxy = userRepo.getReferenceById(userId)
 
         val path = createPath(request.file.originalFilename ?: "EmptyFileName")
@@ -315,11 +315,21 @@ class PaymentFileService(
             status = Status.PENDING
         )
         val queerry = paymentFileRepo.save(newPayment)
-        val usersThatMustApprove = decideApprovals(fileBytes, newPayment)
+        when (val sucess = csvEvaluator.validateAndSum(fileBytes)) {
+            is CSVFileCheker.CsvValidationResult.Invalid -> {
+                throw ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    sucess.error
+                )
+            }
 
-        Files.write(Path.of(path), fileBytes)
+            is CSVFileCheker.CsvValidationResult.Valid -> {
 
-        return queerry.toResponse(usersThatMustApprove.map { user -> user.name }, emptyList(), emptyList())
+                val usersThatMustApprove = decideApprovals(fileBytes, newPayment)
+                Files.write(Path.of(path), fileBytes)
+                return queerry.toResponse(usersThatMustApprove.map { user -> user.name }, emptyList(), emptyList())
+            }
+        }
     }
 
     private fun sumAmount(fileBytes: ByteArray): Long =

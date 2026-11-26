@@ -44,6 +44,41 @@ export const useAdmin = () => {
     }
   };
 
+
+  const haltOperations = async (currentUser: User): Promise<void> => {
+    try {
+      const res = await fetch("/api/v1/payments/disable", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Cannot halt operations");
+
+    } catch (e: any) {
+      errorCreation.value = e.message;
+    }
+  };
+
+  const resumeOperations = async (currentUser: User): Promise<void> => {
+    try {
+      const res = await fetch("/api/v1/payments/enable", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Cannot resume operations");
+
+    } catch (e: any) {
+      errorCreation.value = e.message;
+    }
+  };
+
   const getNextLog = async (currentUser: User): Promise<void> => {
     try {
       const res = await fetch("/api/v1/admin/logs", {
@@ -147,6 +182,8 @@ export const useAdmin = () => {
     roles,
     allUsers,
     logs,
+    haltOperations,
+    resumeOperations,
     addUser,
     getAllUsers,
     getNextLog,

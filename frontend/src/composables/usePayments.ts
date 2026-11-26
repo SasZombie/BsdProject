@@ -13,7 +13,7 @@ export const usePayments = () => {
   const error = ref<string | null>(null);
   const loading = ref<boolean>(false);
 
-  const allPayments = ref<Payment[]>([])
+  const allPayments = ref<Payment[]>([]);
   const activePersonalPayments = ref<ActivePayment[]>([]);
   const pastPersonalPayments = ref<PastPayment[]>([]);
 
@@ -72,7 +72,17 @@ export const usePayments = () => {
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Invalid credentials");
+      if (!res.ok) {
+        const errorData = await res.json();
+
+        const errorMessage =
+          errorData.message ||
+          errorData.detail ||
+          errorData.error ||
+          "Request failed";
+
+        throw new Error(errorMessage);
+      }
 
       selectedFile.value = null;
       const body: Payment = await res.json();
@@ -164,7 +174,7 @@ export const usePayments = () => {
             createdAt: item.createdAt,
             reason: item.reason,
             userName: item.userName,
-            updatedAt: item.updatedAt
+            updatedAt: item.updatedAt,
           });
         } else {
           temp2.push({
@@ -181,7 +191,6 @@ export const usePayments = () => {
 
       paymentsToDecide.value = temp1;
       paymentsDecided.value = temp2;
-
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -206,7 +215,6 @@ export const usePayments = () => {
 
       const body: Payment[] = await res.json();
       allPayments.value = body;
-
     } catch (e: any) {
       error.value = e.message;
     } finally {
@@ -218,7 +226,7 @@ export const usePayments = () => {
     token: string,
     pay: number,
     decision: Status,
-    comment?: string
+    comment?: string,
   ): Promise<void> => {
     try {
       const res = await fetch("/api/v1/requests/payments/decision", {
@@ -236,7 +244,7 @@ export const usePayments = () => {
 
       const body: PaymentDecided = await res.json();
 
-      paymentsDecided.value.push(body)
+      paymentsDecided.value.push(body);
 
       if (!res.ok) throw new Error("Invalid credentials");
     } catch (e: any) {
@@ -246,10 +254,7 @@ export const usePayments = () => {
     }
   };
 
-  const downloadPayment = async (
-    token: string,
-    pay: number,
-  ): Promise<void> => {
+  const downloadPayment = async (token: string, pay: number): Promise<void> => {
     try {
       const res = await fetch(`/api/v1/requests/payments/download/${pay}`, {
         method: "GET",
@@ -259,7 +264,7 @@ export const usePayments = () => {
         },
       });
 
-      if (!res.ok) throw new Error("Invalid credentials");
+      if (!res.ok) throw new Error("Invalid combinations or permisions");
 
       const blob = await res.blob();
 

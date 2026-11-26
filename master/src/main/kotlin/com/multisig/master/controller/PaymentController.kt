@@ -1,24 +1,29 @@
 package com.multisig.master.controller
 
 import com.multisig.master.service.PaymentService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+private val log = KotlinLogging.logger {}
+
 @RestController
 @RequestMapping("/api/v1/payments")
 class PaymentController(private val paymentService: PaymentService) {
 
-    //TODO: Add Haldint to Front-End
     @PostMapping("/enable")
     fun enable(@RequestHeader("Authorization") authHeader: String) {
+        log.info { "Enabling payments" }
         paymentService.toggleService(true)
 
     }
 
     @PostMapping("/disable")
     fun disable(@RequestHeader("Authorization") authHeader: String) {
+        log.info { "Disabling payments" }
+        
         paymentService.toggleService(false)
     }
 }

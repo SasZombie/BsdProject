@@ -39,6 +39,11 @@ class AuthService(
 
         return opaque
     }
+    
+    fun endToken(token: String)
+    {
+        redisTemplate.delete(token)
+    }
 
     fun login(request: UserLogInRequest): UserLogInResponse {
 

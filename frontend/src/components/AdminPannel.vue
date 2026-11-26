@@ -6,12 +6,13 @@ import BaseInput from './BaseInput.vue';
 import BaseNavigation from './BaseNavigation.vue';
 import BaseButton from './BaseButton.vue';
 import { computed, nextTick, onMounted, ref } from 'vue';
+import { currentUser } from '../composables/useAuth.ts';
 
 
 
 const props = defineProps<UserProps>()
 
-const { name, errorCreation, surname, username, password, selectedRole, reportsTo, roles, addUser, getNextLog, allUsers, getAllUsers, errorUpdate, updateUser, logs }
+const { name, errorCreation, surname, username, password, selectedRole, reportsTo, roles, addUser, getNextLog, allUsers, getAllUsers, errorUpdate, updateUser, logs, haltOperations, resumeOperations }
     = useAdmin();
 
 
@@ -56,14 +57,34 @@ const rawLogContent = computed(() => {
     return Array.isArray(logs.value) ? logs.value.join('\n') : logs.value;
 });
 
+const operationsFunctional = ref(true)
+
+const operationsText = ref('Halt Operations')
+
+const handleButtonChange = () => {
+    if (operationsFunctional.value) {
+        haltOperations(currentUser.value!!)
+        operationsText.value = 'Resume Operations'
+    }
+    else {
+        resumeOperations(currentUser.value!!)
+        operationsText.value = 'Halt Operations'
+    }
+    operationsFunctional.value = !operationsFunctional.value
+}
 
 </script>
 
 <template>
     <div class="flex items-center justify-between">
-
         <BaseNavigation v-model:active-tab="activeTab" :tabs="currentTabs" />
-        <BaseButton @click="refresh" text="Refresh" />
+
+        <div class="flex items-center gap-2">
+
+            <BaseButton @click="handleButtonChange" :text="operationsText" />
+
+            <BaseButton @click="refresh" text="Refresh" />
+        </div>
     </div>
     <div v-if="activeTab === 'users'">
 

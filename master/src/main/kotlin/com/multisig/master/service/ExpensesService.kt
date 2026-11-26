@@ -284,14 +284,6 @@ class ExpensesService(
         userRepo.findByUsername(username)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "$username not found") }
 
-    // ExpenseCreateResponse
-    //TODO: Update this to reflect approvals neededs
-    // @Suppress("UnusedReceiverParameter")
-    // private fun Expense.toResponse() = ExpenseCreateResponse(
-    //     message = "Created!",
-    //     approvalsNeededCount = 2
-    // )
-
 
     private fun Expense.toResponse(
         needsApprovalBy: List<String>,

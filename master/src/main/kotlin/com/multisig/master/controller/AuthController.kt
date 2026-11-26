@@ -29,4 +29,12 @@ class AuthController(private val authService: AuthService) {
         val authResponse = authService.refreshToken(token)
         return ResponseEntity.ok(authResponse)
     }
+    
+    @PostMapping("/endToken")
+    fun endToken(@RequestHeader("Authorization") authHeader: String): ResponseEntity<String> {
+        val token = authHeader.removePrefix("Bearer ").trim()
+        
+        authService.endToken(token)
+        return ResponseEntity.ok("Done")
+    }
 }

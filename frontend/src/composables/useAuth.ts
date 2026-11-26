@@ -34,7 +34,7 @@ export const useAuth = () => {
   const refreshToken = async (token: string): Promise<void> => {
     try {
       const res = await fetch("/api/v1/auth/refreshToken", {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -43,8 +43,8 @@ export const useAuth = () => {
 
       if (!res.ok) throw new Error("Invalid credentials");
 
-      const body = await res.text()
-      currentUser.value!!.token = body 
+      const body = await res.text();
+      currentUser.value!!.token = body;
 
       router.push("/dashboard");
     } catch (e: any) {
@@ -54,9 +54,14 @@ export const useAuth = () => {
     }
   };
 
-  const logOut = async () => {
-    //TODO: Api call to backend
-
+  const logOut = async (token: string) => {
+    fetch("/api/v1/auth/endToken", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     router.push("/");
   };
 
