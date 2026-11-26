@@ -42,7 +42,7 @@ jobs:
           "
 
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'temurin'
@@ -54,3 +54,10 @@ jobs:
 
       - name: Run Maven Tests
         run: ./mvnw clean test
+
+      - name: Store Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: master-spring-app
+          path: master/target/*.jar
+          retention-days: 7
