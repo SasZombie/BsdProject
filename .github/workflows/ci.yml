@@ -24,6 +24,7 @@ jobs:
         java-version: '25'
         distribution: 'temurin'
         cache: 'maven' 
+        cache-dependency-path: master/pom.xml
 
     - name: Make Maven Wrapper Executable
       run: chmod +x mvnw
