@@ -142,7 +142,6 @@ export const useAdmin = () => {
 
         
         body: JSON.stringify({
-          token: currentUser.token,
           name: name.value,
           surname: surname.value,
           username: username.value,

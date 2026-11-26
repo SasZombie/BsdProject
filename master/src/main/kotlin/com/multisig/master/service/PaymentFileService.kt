@@ -255,18 +255,6 @@ class PaymentFileService(
             )
         }
 
-        // val querry = reqDecisionRepo.findByUserIdAndPaymentFileId(userId, fileId) ?: throw ResponseStatusException(
-        //     HttpStatus.FORBIDDEN,
-        //     "This combination doesnt exist"
-        // )
-
-        // if (querry.paymentFile == null) {
-        //     throw ResponseStatusException(
-        //         HttpStatus.BAD_REQUEST,
-        //         "Cannot find this file"
-        //     )
-        // }
-
         val filePathString = paymentFile!!.filePath
         val filePath = Paths.get(filePathString)
 
@@ -394,11 +382,7 @@ class PaymentFileService(
                     }
 
                     else -> {
-                        println("AIci se executa!")
                         val manager1 = paymentFile.user?.reportsTo ?: cfo
-                        println(paymentFile.user?.surname)
-                        println(paymentFile.user?.reportsTo?.surname)
-
                         listOf(manager1)
                     }
                 }

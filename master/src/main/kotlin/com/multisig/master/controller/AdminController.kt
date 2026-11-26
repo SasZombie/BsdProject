@@ -15,7 +15,7 @@ private val log = KotlinLogging.logger {}
 @RequestMapping("/api/v1/admin")
 class AdminController(private val adminService: AdminService) {
 
-    
+    //TODO: I forgot any Role Security
     @GetMapping("/logs")
     fun getLogLine(@CurrentUser userId: Long): ResponseEntity<List<String>> {
         

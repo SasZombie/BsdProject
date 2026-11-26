@@ -29,11 +29,6 @@ class UserService(
 
     @Transactional
     fun updateUser(userToBeUpdated: Long, newFields: UserUpdateRequest): UserBackednResponse {
-        println("New Fields")
-        println(newFields)
-        println("USERRRRRRRRR to be Updated: $userToBeUpdated")
-        println(userToBeUpdated)
-
         val user = userRepository.findById(userToBeUpdated)
             .orElseThrow { NoSuchElementException("User not found with id: $userToBeUpdated") }
 

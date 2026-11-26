@@ -7,9 +7,6 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class UserCreateRequest(
-    @field:NotBlank(message = "Token cannot be blank")
-    val token: String,
-
     @field:NotBlank(message = "Name cannot be blank")
     val name: String,
 
