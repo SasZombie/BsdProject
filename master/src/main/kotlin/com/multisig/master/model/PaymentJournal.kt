@@ -30,17 +30,17 @@ class PaymentJournal(
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType::class)
-    @Column(columnDefinition = "from_status", nullable = false)
+    @Column(name = "from_status", columnDefinition = "journal_stage", nullable = false)
     var fromStatus: JournalStage = JournalStage.PAYMENT_PENDING,
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType::class)
-    @Column(columnDefinition = "to_status", nullable = false)
+    @Column(name = "to_status", columnDefinition = "journal_stage", nullable = false)
     var toStatus: JournalStage = JournalStage.PAYMENT_PENDING,
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType::class)
-    @Column(columnDefinition = "current_stage", nullable = false)
+    @Column(name = "stage", columnDefinition = "journal_stage", nullable = false)
     var stage: JournalStage = JournalStage.PAYMENT_PENDING,
 
     @Column(name = "retry_count", nullable = false)

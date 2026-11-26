@@ -38,7 +38,7 @@ class ExpenseDecisions(
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType::class)
-    @Column(columnDefinition = "decision", nullable = false)
+    @Column(name = "decision", columnDefinition = "status", nullable = false)
     var decision: Status = Status.PENDING,
 
 ) {
