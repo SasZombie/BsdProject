@@ -28,6 +28,10 @@ jobs:
           sudo -u postgres psql -c "CREATE USER sas WITH PASSWORD '1';"
           sudo -u postgres psql -c "CREATE DATABASE multisig OWNER sas;"
 
+          sudo sed -i 's/md5/trust/g' /etc/postgresql/*/main/pg_hba.conf
+          sudo sed -i 's/scram-sha-256/trust/g' /etc/postgresql/*/main/pg_hba.conf
+          sudo systemctl restart postgresql
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
