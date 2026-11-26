@@ -21,14 +21,12 @@ const currentTabs: Tab[] = [
     {
         id: 'payments',
         label: 'Payments',
-        show: true
-        // show: renderLogic.renderPayments
+        show: renderLogic.renderPayments
     },
     {
         id: 'admin',
         label: 'Admin',
-        show: true
-        // show: renderLogic.renderAdmin
+        show: renderLogic.renderAdmin
     }
 ].filter((elem) => elem.show === true)
 

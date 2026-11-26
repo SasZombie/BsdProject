@@ -9,6 +9,7 @@ import BaseExtenedTable from './BaseExtenedTable.vue';
 import BaseConfirmBox from './BaseConfirmBox.vue';
 import { currentUser } from '../composables/useAuth.ts';
 import { usePayments } from '../composables/usePayments.ts';
+import { useRoles } from '../composables/useRoles.ts';
 
 const props = defineProps<UserProps>()
 
@@ -40,6 +41,9 @@ const refresh = async () => {
   ]);
 }
 
+const renderLogic = useRoles(currentUser.value!.role)
+
+
 const currentTabs: Tab[] = [
   {
     id: 'activePersonal',
@@ -54,17 +58,17 @@ const currentTabs: Tab[] = [
   {
     id: 'toDecide',
     label: 'Active Payments to Decide',
-    show: true
+    show: renderLogic.renderPaymentsExtra
   },
   {
     id: 'pastToDecide',
     label: 'Past Payments Decided',
-    show: true
+    show: renderLogic.renderPaymentsExtra
   },
   {
     id: 'allPayments',
     label: 'All payments done',
-    show: true
+    show: renderLogic.renderAll
   }
 ].filter((elem) => elem.show === true)
 
@@ -101,7 +105,6 @@ const handleShowButton = () => {
     buttonText.value = "Add New Expense"
   }
 }
-
 
 const pendingAction = ref<BoxProps | null>(null)
 

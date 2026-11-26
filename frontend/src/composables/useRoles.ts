@@ -7,6 +7,7 @@ export const useRoles = (userRole: Role) =>
     renderPayments: ['ACCOUNTANT', 'MANAGER', 'CEO', 'CFO', 'BOARD_DIRECTOR'].includes(userRole),
     renderPaymentsExtra: ['MANAGER', 'CEO', 'CFO', 'BOARD_DIRECTOR'].includes(userRole),
     renderAdmin: 'ADMIN' === userRole,
+    renderAll: ['CEO', 'CFO', 'BOARD_DIRECTOR'].includes(userRole)
     // const renderExpense: boolean = false
 
 })

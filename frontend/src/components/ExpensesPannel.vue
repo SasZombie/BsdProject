@@ -10,6 +10,7 @@ import BaseExtenedTable from './BaseExtenedTable.vue';
 import BaseConfirmBox from './BaseConfirmBox.vue';
 
 import { currentUser } from '../composables/useAuth.ts';
+import { useRoles } from '../composables/useRoles.ts';
 
 const props = defineProps<UserProps>()
 
@@ -43,6 +44,9 @@ const refresh = async () => {
   ]);
 }
 
+const renderLogic = useRoles(currentUser.value!.role)
+
+
 const currentTabs: Tab[] = [
   {
     id: 'activePersonal',
@@ -57,17 +61,17 @@ const currentTabs: Tab[] = [
   {
     id: 'toDecide',
     label: 'Active Expenses to Decide',
-    show: true
+    show: renderLogic.renderExpenseExtra
   },
   {
     id: 'pastToDecide',
     label: 'Past expenses Decided',
-    show: true
+    show: renderLogic.renderExpenseExtra
   },
   {
     id: 'allExpenses',
     label: 'All expenses done',
-    show: true
+    show: renderLogic.renderAll
   }
 ].filter((elem) => elem.show === true)
 
