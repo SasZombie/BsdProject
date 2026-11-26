@@ -32,6 +32,15 @@ jobs:
           sudo sed -i 's/scram-sha-256/trust/g' /etc/postgresql/*/main/pg_hba.conf
           sudo systemctl restart postgresql
 
+          sudo -u postgres psql -d multisig -c "
+            CREATE TYPE journal_stage AS ENUM ('PAYMENT_PENDING', 'STARTED', 'DONE', 'FAILED');
+            CREATE TYPE role AS ENUM ('EMPLOYEE', 'ADMIN', 'MANAGER', 'CEO', 'CFO', 'BOARD_DIRECTOR', 'ACCOUNTANT');
+            CREATE TYPE status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'VETOED');
+            CREATE TYPE from_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'VETOED');
+            CREATE TYPE to_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'VETOED');
+            CREATE TYPE current_stage AS ENUM ('PAYMENT_PENDING', 'STARTED', 'DONE', 'FAILED');
+          "
+
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
