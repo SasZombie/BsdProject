@@ -37,9 +37,6 @@ jobs:
             CREATE TYPE journal_stage AS ENUM ('PAYMENT_PENDING', 'STARTED', 'DONE', 'FAILED');
             CREATE TYPE role AS ENUM ('EMPLOYEE', 'ADMIN', 'MANAGER', 'CEO', 'CFO', 'BOARD_DIRECTOR', 'ACCOUNTANT');
             CREATE TYPE status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'VETOED');
-            CREATE TYPE from_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'VETOED');
-            CREATE TYPE to_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'VETOED');
-            CREATE TYPE current_stage AS ENUM ('PAYMENT_PENDING', 'STARTED', 'DONE', 'FAILED');
           "
 
           sudo -u postgres psql -d multisig_test -c "

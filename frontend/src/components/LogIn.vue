@@ -4,7 +4,7 @@ import { useAuth } from '../composables/useAuth'
 import BaseInput from './BaseInput.vue'
 import BaseButton from './BaseButton.vue'
 
-const username = ref('AdminUsername')
+const username = ref('Admin')
 const password = ref('1')
 
 const { login, error } = useAuth()

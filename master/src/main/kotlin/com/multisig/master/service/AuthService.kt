@@ -52,17 +52,10 @@ class AuthService(
                 ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password")
             }
 
-        if (user.passwordHash != request.password) {
+        val matches = passwordEncoder.matches(request.password, user.passwordHash)
+        if (!matches) {
             throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password")
         }
-        //I already created the users with no hashes and am
-        //Too lazy to re-create them with the hash
-        //So I will just
-        //Comment the correct way
-        // val matches = passwordEncoder.matches(request.password, user.passwordHash)
-        // if (!matches) {
-        //     throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password")
-        // }
 
         val opaque = UUID.randomUUID().toString()
 
