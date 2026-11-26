@@ -40,4 +40,6 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run Maven Tests
-        run: ./mvnw clean test -Dspring.jpa.hibernate.ddl-auto=create-drop
+        env:
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+        run: ./mvnw clean test
