@@ -15,19 +15,26 @@ jobs:
         working-directory: ./master
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: 'maven' 
-        cache-dependency-path: master/pom.xml
+      - name: Start PostgreSQL and Redis
+        run: |
+          sudo systemctl start redis-server
+          sudo systemctl start postgresql
+          sudo -u postgres psql -c "CREATE USER sas WITH PASSWORD '1';"
+          sudo -u postgres psql -c "CREATE DATABASE multisig OWNER sas;"
 
-    - name: Make Maven Wrapper Executable
-      run: chmod +x mvnw
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: master/pom.xml
 
-    - name: Run Maven Tests
-      run: ./mvnw clean test
+      - name: Make Maven Wrapper Executable
+        run: chmod +x mvnw
+
+      - name: Run Maven Tests
+        run: ./mvnw clean test
