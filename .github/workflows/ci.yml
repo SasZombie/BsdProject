@@ -55,9 +55,13 @@ jobs:
       - name: Run Maven Tests
         run: ./mvnw clean test
 
+      - name: Build and Test Application
+        run: ./mvnw clean package
+        
       - name: Store Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: master-spring-app
+          name: master
           path: master/target/*.jar
+          if-no-files-found: error
           retention-days: 7
