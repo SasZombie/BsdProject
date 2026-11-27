@@ -2,6 +2,7 @@ package com.multisig.master.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.multisig.master.config.SecurityConfig
 import com.multisig.master.config.filters.TokenExchangeFilter
 import com.multisig.master.dto.UserBackednResponse
 import com.multisig.master.dto.UserCreateRequest
@@ -24,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(UserController::class)
-@Import(TokenExchangeFilter::class)
+@Import(TokenExchangeFilter::class, SecurityConfig::class)
 class UserControllerSecurityTest {
 
     @Autowired
@@ -64,7 +65,7 @@ class UserControllerSecurityTest {
     @Test
     fun `request with expired or unknown token in Redis returns 401 Unauthorized`() {
         val opaqueToken = "invalid-or-expired-uuid"
-        every { valueOperations.get("tokens$opaqueToken") } returns null
+        every { valueOperations.get("tokens:$opaqueToken") } returns null
 
         mockMvc.perform(
             get("/api/v1/users/all")
@@ -76,9 +77,15 @@ class UserControllerSecurityTest {
     @Test
     fun `request with valid token populates user context and returns 200 OK`() {
         val validToken = "valid-session-uuid-123"
-        val expectedUserId = "42"
 
-        every { valueOperations.get("tokens$validToken") } returns expectedUserId
+        val authUserJson = """
+        {
+            "id": 42,
+            "role": "ADMIN"
+        }
+    """.trimIndent()
+
+        every { valueOperations.get("tokens:$validToken") } returns authUserJson
 
         val mockUsers = listOf(
             UserBackednResponse(
@@ -103,37 +110,22 @@ class UserControllerSecurityTest {
     }
 
     @Test
-    fun `request with direct X-User-Id header passes resolver if filter is bypassed or present`() {
-        val validToken = "admin-session-uuid-999"
-        every { valueOperations.get("tokens$validToken") } returns "1"
+    fun `request with non-admin role returns 403 Forbidden`() {
+        val validToken = "employee-token-456"
+        val employeeJson = """
+        {
+            "id": 99,
+            "role": "EMPLOYEE"
+        }
+    """.trimIndent()
 
-        val request = UserCreateRequest(
-            name = "Bob",
-            surname = "Jones",
-            username = "bjones",
-            password = "SecretPassword123",
-            reportsTo = null,
-            role = Role.EMPLOYEE
-        )
-
-        val response = UserBackednResponse(
-            id = 2L,
-            name = "Bob",
-            surname = "Jones",
-            username = "bjones",
-            reportsTo = null,
-            role = Role.EMPLOYEE
-        )
-
-        every { userService.createUser(any()) } returns response
+        every { valueOperations.get("tokens:$validToken") } returns employeeJson
 
         mockMvc.perform(
-            post("/api/v1/users/create")
+            get("/api/v1/users/all")
                 .header("Authorization", "Bearer $validToken")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
+                .accept(MediaType.APPLICATION_JSON)
         )
-            .andExpect(status().isCreated)
-            .andExpect(jsonPath("$.username").value("bjones"))
+            .andExpect(status().isForbidden)
     }
 }
