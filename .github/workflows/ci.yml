@@ -25,7 +25,7 @@ jobs:
           sudo systemctl start redis-server
 
           sudo systemctl start postgresql
-          sudo -u postgres psql -c "CREATE USER sas WITH PASSWORD '1';"
+          sudo -u postgres psql -c "CREATE USER sas WITH SUPERUSER PASSWORD '1';"
           sudo -u postgres psql -c "CREATE DATABASE multisig OWNER sas;"
           sudo -u postgres psql -c "CREATE DATABASE multisig_test OWNER sas;"
 
@@ -46,7 +46,7 @@ jobs:
           "
 
       - name: Set up JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '25'
           distribution: 'temurin'
@@ -57,30 +57,29 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Install Newman
         run: npm install -g newman
 
       - name: Make Maven Wrapper Executable
         run: chmod +x mvnw
 
-      - name: Run Maven Tests
-        run: ./mvnw clean test
-
-      - name: Build and Test Application
+      - name: Build and Package Application
         run: ./mvnw clean package
 
       - name: Start Application in Background
         run: |
-          java -jar target/*.jar > app.log 2>&1 &
+          java -jar target/*.jar --spring.jpa.hibernate.ddl-auto=create > app.log 2>&1 &
           echo $! > app.pid
 
       - name: Wait for Application Health Check
         run: |
           for i in {1..30}; do
             if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "Application is UP and ready for E2E testing!"
               exit 0
             fi
+            echo "Waiting for app to initialize... ($i/30)"
             sleep 2
           done
           echo "Application failed to boot in time. Dumping logs:"
@@ -88,7 +87,7 @@ jobs:
           exit 1
 
       - name: Run Postman E2E Verification
-        run: newman run master/src/test/resources/multisig-e2e.postman_collection.json
+        run: newman run src/test/resources/multisig-e2e.postman_collection.json
 
       - name: Stop Application
         if: always()
