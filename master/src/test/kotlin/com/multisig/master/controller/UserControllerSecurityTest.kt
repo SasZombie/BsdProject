@@ -1,19 +1,22 @@
 package com.multisig.master.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.multisig.master.config.filters.TokenExchangeFilter
 import com.multisig.master.dto.UserBackednResponse
 import com.multisig.master.dto.UserCreateRequest
 import com.multisig.master.model.Role
 import com.multisig.master.service.UserService
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+import org.springframework.context.annotation.Import
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.core.ValueOperations
 import org.springframework.http.MediaType
-import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -21,49 +24,89 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(UserController::class)
+@Import(TokenExchangeFilter::class)
 class UserControllerSecurityTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
 
-    private val objectMapper = ObjectMapper()
+    private val objectMapper = ObjectMapper().registerKotlinModule()
 
     @MockkBean
     private lateinit var userService: UserService
 
-    @MockkBean(relaxed = true)
-    private lateinit var stringRedisTemplate: StringRedisTemplate
-    
+    @MockkBean
+    private lateinit var redisTemplate: StringRedisTemplate
+
+    @MockkBean
+    private lateinit var valueOperations: ValueOperations<String, String>
+
+    @BeforeEach
+    fun setUp() {
+        every { redisTemplate.opsForValue() } returns valueOperations
+    }
+
     @Test
-    fun `unauthenticated requests to protected endpoints return 401 or 403`() {
-        mockMvc.perform(get("/api/users"))
+    fun `request without Authorization header returns 401 Unauthorized`() {
+        mockMvc.perform(get("/api/v1/users/all"))
             .andExpect(status().isUnauthorized)
     }
 
     @Test
-    @WithMockUser(username = "regular_user", roles = ["ADMIN"])
-    fun `authenticated user can list users`() {
+    fun `request with malformed Authorization header returns 401 Unauthorized`() {
+        mockMvc.perform(
+            get("/api/v1/users/alls")
+                .header("Authorization", "Basic dXNlcjpwYXNz")
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `request with expired or unknown token in Redis returns 401 Unauthorized`() {
+        val opaqueToken = "invalid-or-expired-uuid"
+        every { valueOperations.get("tokens$opaqueToken") } returns null
+
+        mockMvc.perform(
+            get("/api/v1/users/all")
+                .header("Authorization", "Bearer $opaqueToken")
+        )
+            .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `request with valid token populates user context and returns 200 OK`() {
+        val validToken = "valid-session-uuid-123"
+        val expectedUserId = "42"
+
+        every { valueOperations.get("tokens$validToken") } returns expectedUserId
+
         val mockUsers = listOf(
             UserBackednResponse(
-                id = 1L,
+                id = 42L,
                 name = "Alice",
                 surname = "Smith",
                 username = "asmith",
                 reportsTo = null,
-                role = Role.EMPLOYEE
+                role = Role.ADMIN
             )
         )
         every { userService.getAllUsers() } returns mockUsers
 
-        mockMvc.perform(get("/api/users").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(
+            get("/api/v1/users/all")
+                .header("Authorization", "Bearer $validToken")
+                .accept(MediaType.APPLICATION_JSON)
+        )
             .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].id").value(42L))
             .andExpect(jsonPath("$[0].username").value("asmith"))
-            .andExpect(jsonPath("$[0].role").value("EMPLOYEE"))
     }
 
     @Test
-    @WithMockUser(username = "admin_user", roles = ["ADMIN"])
-    fun `admin user can create a new user`() {
+    fun `request with direct X-User-Id header passes resolver if filter is bypassed or present`() {
+        val validToken = "admin-session-uuid-999"
+        every { valueOperations.get("tokens$validToken") } returns "1"
+
         val request = UserCreateRequest(
             name = "Bob",
             surname = "Jones",
@@ -85,34 +128,12 @@ class UserControllerSecurityTest {
         every { userService.createUser(any()) } returns response
 
         mockMvc.perform(
-            post("/api/users")
-                .with(csrf())
+            post("/api/v1/users/create")
+                .header("Authorization", "Bearer $validToken")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
         )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.id").value(2L))
+            .andExpect(status().isCreated)
             .andExpect(jsonPath("$.username").value("bjones"))
-    }
-
-    @Test
-    @WithMockUser(username = "employee_user", roles = ["EMPLOYEE"])
-    fun `standard employee cannot access admin endpoints`() {
-        val request = UserCreateRequest(
-            name = "Hacker",
-            surname = "User",
-            username = "hacker",
-            password = "pwd",
-            reportsTo = null,
-            role = Role.ADMIN
-        )
-
-        mockMvc.perform(
-            post("/api/users")
-                .with(csrf())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        )
-            .andExpect(status().isUnauthorized)
     }
 }

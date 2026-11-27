@@ -51,7 +51,7 @@ export const useExpenses = () => {
           reason: reason,
         }),
       });
-      if (!res.ok) throw new Error("Invalid credentials");
+      if (!res.ok) throw new Error(await res.json());
 
       const body: Expense = await res.json();
       body.postedBy = currentUser.value!!.name;
@@ -78,7 +78,18 @@ export const useExpenses = () => {
         },
       });
 
-      if (!res.ok) throw new Error("Invalid credentials");
+      if (!res.ok) {
+        const errorData = await res.json();
+
+        const errorMessage =
+          errorData.message ||
+          errorData.detail ||
+          errorData.error ||
+          "Request failed";
+
+        throw new Error(errorMessage);
+      }
+
       const body: Expense[] = await res.json();
       const temp1: ActiveExpense[] = [];
       const temp2: PastExpsnse[] = [];

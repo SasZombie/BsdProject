@@ -34,16 +34,6 @@ const {
   allExpenses
 } = useExpenses();
 
-
-const refresh = async () => {
-
-  await Promise.all([
-    getPersonalExpenses(props.currentUser.token),
-    getExpensesDecisions(props.currentUser.token),
-    getAllExpenses(props.currentUser.token)
-  ]);
-}
-
 const renderLogic = useRoles(currentUser.value!.role)
 
 
@@ -51,7 +41,8 @@ const currentTabs: Tab[] = [
   {
     id: 'activePersonal',
     label: 'Active Personal Expenses',
-    show: true
+    show: true,
+    refresh: () => getPersonalExpenses(props.currentUser.token)
   },
   {
     id: 'pastPersonal',
@@ -61,7 +52,9 @@ const currentTabs: Tab[] = [
   {
     id: 'toDecide',
     label: 'Active Expenses to Decide',
-    show: renderLogic.renderExpenseExtra
+    show: renderLogic.renderExpenseExtra,
+    refresh: () => getExpensesDecisions(props.currentUser.token)
+
   },
   {
     id: 'pastToDecide',
@@ -71,10 +64,19 @@ const currentTabs: Tab[] = [
   {
     id: 'allExpenses',
     label: 'All expenses done',
-    show: renderLogic.renderAll
+    show: renderLogic.renderAll,
+    refresh: () => getAllExpenses(props.currentUser.token),
+
   }
 ].filter((elem) => elem.show === true)
 
+const refresh = async () => {
+  const refreshPromises = currentTabs
+    .map((tab) => tab.refresh?.())
+    .filter(Boolean)
+
+  await Promise.all(refreshPromises)
+}
 
 const activeTab = ref('activePersonal')
 

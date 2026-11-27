@@ -32,15 +32,6 @@ const {
 } = usePayments()
 
 
-const refresh = async () => {
-
-  await Promise.all([
-    getPersonalPayments(props.currentUser.token),
-    getPaymentsToDecide(props.currentUser.token),
-    getAllPayments(props.currentUser.token)
-  ]);
-}
-
 const renderLogic = useRoles(currentUser.value!.role)
 
 
@@ -48,7 +39,8 @@ const currentTabs: Tab[] = [
   {
     id: 'activePersonal',
     label: 'Active Personal Payments',
-    show: true
+    show: true,
+    refresh: () => getPersonalPayments(props.currentUser.token)
   },
   {
     id: 'pastPersonal',
@@ -58,7 +50,8 @@ const currentTabs: Tab[] = [
   {
     id: 'toDecide',
     label: 'Active Payments to Decide',
-    show: renderLogic.renderPaymentsExtra
+    show: renderLogic.renderPaymentsExtra,
+    refresh: () => getPaymentsToDecide(props.currentUser.token)
   },
   {
     id: 'pastToDecide',
@@ -68,10 +61,19 @@ const currentTabs: Tab[] = [
   {
     id: 'allPayments',
     label: 'All payments done',
-    show: renderLogic.renderAll
+    show: renderLogic.renderAll,
+    refresh: () => getAllPayments(props.currentUser.token)
   }
 ].filter((elem) => elem.show === true)
 
+const refresh = async () => {
+
+  const refreshPromises = currentTabs
+    .map((tab) => tab.refresh?.())
+    .filter(Boolean)
+
+  await Promise.all(refreshPromises)
+}
 
 const activeTab = ref('activePersonal')
 
@@ -123,7 +125,7 @@ const onDecision = (index: number, decision: Status, type: number) => {
     expId = allPayments.value[index].id
   }
 
-  pendingAction.value = { expId, decision, type}
+  pendingAction.value = { expId, decision, type }
 }
 
 const handleSentAction = () => {
@@ -141,7 +143,7 @@ onMounted(async () => {
 })
 
 const handleDownload = async (item: { id: number }) => {
-  
+
   downloadPayment(currentUser.value!!.token, item.id)
 }
 
@@ -179,15 +181,20 @@ const handleDownload = async (item: { id: number }) => {
 
   <div class="h-px w-full bg-gradient-to-r from-transparent via-nuxtGreen/50 to-transparent"></div>
 
-  <BasePlainTable @download="handleDownload" :download="true" v-if="activeTab === 'activePersonal'" :data="activePersonalPayments" />
+  <BasePlainTable @download="handleDownload" :download="true" v-if="activeTab === 'activePersonal'"
+    :data="activePersonalPayments" />
 
-  <BasePlainTable @download="handleDownload" :download="true" v-if="activeTab === 'pastPersonal'" :data="pastPersonalPayments" /> 
+  <BasePlainTable @download="handleDownload" :download="true" v-if="activeTab === 'pastPersonal'"
+    :data="pastPersonalPayments" />
 
-  <BaseExtenedTable @download="handleDownload" :download="true" @action="onDecision" v-if="activeTab === 'toDecide'" :data="paymentsToDecide" />
+  <BaseExtenedTable @download="handleDownload" :download="true" @action="onDecision" v-if="activeTab === 'toDecide'"
+    :data="paymentsToDecide" />
 
-  <BaseExtenedTable @download="handleDownload" :download="true" v-if="activeTab === 'pastToDecide'" :data="paymentsDecided" :extra="true" /> 
+  <BaseExtenedTable @download="handleDownload" :download="true" v-if="activeTab === 'pastToDecide'"
+    :data="paymentsDecided" :extra="true" />
 
-  <BaseExtenedTable @download="handleDownload" :download="true"  @action="onDecision" v-if="activeTab === 'allPayments'" :data="allPayments" :extra="true" />
+  <BaseExtenedTable @download="handleDownload" :download="true" @action="onDecision" v-if="activeTab === 'allPayments'"
+    :data="allPayments" :extra="true" />
 
   <BaseConfirmBox @submit="handleSentAction" @cancel="cancelAction" :pendingAction="pendingAction" />
 

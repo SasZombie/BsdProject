@@ -56,3 +56,8 @@ data class UserBackednResponse(
     val reportsTo: String?,
     val role: Role
 )
+
+data class AuthUser(
+    val id: Long,
+    val role: Role
+)

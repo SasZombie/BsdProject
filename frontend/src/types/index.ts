@@ -129,6 +129,7 @@ export interface Tab {
   id: string;
   label: string;
   show: boolean;
+  refresh?: () => Promise<void> | void
 }
 
 export interface UserProps {

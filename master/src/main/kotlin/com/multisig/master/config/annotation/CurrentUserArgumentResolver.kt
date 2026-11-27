@@ -2,6 +2,7 @@ package com.multisig.master.config.annotation
 
 
 import com.multisig.master.config.annotation.CurrentUser
+import com.multisig.master.dto.AuthUser
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
 import org.springframework.http.HttpStatus
@@ -17,7 +18,7 @@ class CurrentUserArgumentResolver : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.hasParameterAnnotation(CurrentUser::class.java) &&
-                parameter.parameterType == Long::class.java
+                parameter.parameterType == AuthUser::class.java
     }
 
     override fun resolveArgument(
@@ -25,16 +26,12 @@ class CurrentUserArgumentResolver : HandlerMethodArgumentResolver {
         mavContainer: ModelAndViewContainer?,
         webRequest: NativeWebRequest,
         binderFactory: WebDataBinderFactory?
-    ): Long {
+    ): AuthUser {
         val request = webRequest.getNativeRequest(HttpServletRequest::class.java)
 
-        val userId = request?.getAttribute("CurrentUserId") as? String
-            ?: request?.getHeader("X-User-Id")
+        val user = request?.getAttribute("CurrentUser") as? AuthUser
+            ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "User context not found")
 
-        if (userId.isNullOrBlank()) {
-            throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "User context not found")
-        }
-        
-        return userId.toLong()
+        return user
     }
 }

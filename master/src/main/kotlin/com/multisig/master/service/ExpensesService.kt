@@ -53,16 +53,19 @@ class ExpensesService(
             req.toResponse(pending, approvedBy, rejectedBy = rejectedBy)
         }
     }
+
     @Transactional
-    fun veto(userId: Long, request: VetoExpense)
-    {
-        println("This veto function is deeply integrated with the payment system" + 
-                "that is not implemented, so I will also skip the boilerplate")
-                
-        val expense = requestsRepo.findById(request.expenseId).orElseThrow { NoSuchElementException("This request doesnt exist") }
-        
+    fun veto(userId: Long, request: VetoExpense) {
+        println(
+            "This veto function is deeply integrated with the payment system" +
+                    "that is not implemented, so I will also skip the boilerplate"
+        )
+
+        val expense =
+            requestsRepo.findById(request.expenseId).orElseThrow { NoSuchElementException("This request doesnt exist") }
+
         expense.status = Status.VETOED
-        
+
     }
 
     @Transactional(readOnly = true)
@@ -344,6 +347,4 @@ class ExpensesService(
     ): List<UserExpenseResponseExtened> = this.map {
         it.toResponseExtened(needsApprovalBy, approvedBy, rejectedBy)
     }
-
-
 }

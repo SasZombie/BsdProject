@@ -1,5 +1,6 @@
 package com.multisig.master.service
 
+import com.multisig.master.dto.AuthUser
 import com.multisig.master.dto.UserLogInRequest
 import com.multisig.master.dto.UserLogInResponse
 import com.multisig.master.repository.UserRepository
@@ -9,6 +10,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 import java.util.UUID
 
@@ -16,32 +18,36 @@ import java.util.UUID
 class AuthService(
     private val userRepository: UserRepository,
     private val passwordEncoder: Argon2PasswordEncoder,
-    private val redisTemplate: StringRedisTemplate
+    private val redisTemplate: StringRedisTemplate,
+    private val objectMapper: ObjectMapper
 ) {
 
     fun refreshToken(token: String): String {
 
-        val redisKey = "tokens$token"
-        val realUserId = redisTemplate.opsForValue().get(redisKey) ?: throw ResponseStatusException(
+        val redisKey = "tokens:$token"
+
+        val userJson = redisTemplate.opsForValue().get(redisKey) ?: throw ResponseStatusException(
             HttpStatus.UNAUTHORIZED,
             "Invalid or expired session token"
         )
 
+        val authUser = objectMapper.readValue(userJson, AuthUser::class.java)
+
         val opaque = UUID.randomUUID().toString()
 
-        val newRedisKey = "tokens$opaque"
-
-        redisTemplate.opsForValue().set(
-            newRedisKey,
-            realUserId,
-            Duration.ofMinutes(15)
+        val userValue = AuthUser(
+            authUser.id,
+            authUser.role
         )
+        val newRedisKey = "tokens:$opaque"
+
+        redisTemplate.opsForValue().set(newRedisKey, userJson, Duration.ofMinutes(15))
+
 
         return opaque
     }
-    
-    fun endToken(token: String)
-    {
+
+    fun endToken(token: String) {
         redisTemplate.delete(token)
     }
 
@@ -59,13 +65,15 @@ class AuthService(
 
         val opaque = UUID.randomUUID().toString()
 
-        val redisKey = "tokens$opaque"
-
-        redisTemplate.opsForValue().set(
-            redisKey,
-            user.id.toString(),
-            Duration.ofMinutes(15)
+        val userValue = AuthUser(
+            user.id!!,
+            user.role
         )
+        val redisKey = "tokens:$opaque"
+
+        val userJson = objectMapper.writeValueAsString(userValue)
+        redisTemplate.opsForValue().set(redisKey, userJson, Duration.ofMinutes(15))
+
 
         return UserLogInResponse(
             token = opaque,

@@ -93,6 +93,7 @@ export const useAdmin = () => {
 
       const body: string[] = await res.json();
       logs.value.push(...body)
+      console.log(body)
 
     } catch (e: any) {
       errorCreation.value = e.message;

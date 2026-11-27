@@ -1,5 +1,7 @@
 package com.multisig.master.controller
 
+import com.multisig.master.config.annotation.CurrentUser
+import com.multisig.master.dto.AuthUser
 import com.multisig.master.service.PaymentService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.web.bind.annotation.PostMapping
@@ -14,14 +16,14 @@ private val log = KotlinLogging.logger {}
 class PaymentController(private val paymentService: PaymentService) {
 
     @PostMapping("/enable")
-    fun enable(@RequestHeader("Authorization") authHeader: String) {
+    fun enable(@CurrentUser user: AuthUser, @RequestHeader("Authorization") authHeader: String) {
         log.info { "Enabling payments" }
         paymentService.toggleService(true)
 
     }
 
     @PostMapping("/disable")
-    fun disable(@RequestHeader("Authorization") authHeader: String) {
+    fun disable(@CurrentUser user: AuthUser, @RequestHeader("Authorization") authHeader: String) {
         log.info { "Disabling payments" }
         
         paymentService.toggleService(false)
