@@ -20,7 +20,8 @@ class TokenExchangeFilter(
 ) : OncePerRequestFilter() {
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        return request.requestURI.startsWith("/api/v1/auth")
+        val uri = request.requestURI
+        return uri.startsWith("/api/v1/auth") || uri.startsWith("/actuator")
     }
 
     override fun doFilterInternal(
@@ -36,7 +37,7 @@ class TokenExchangeFilter(
         }
 
         val opaque = authHeader.removePrefix("Bearer ").trim()
-        
+
         val redisKey = "tokens:$opaque"
         val userJson = redisTemplate.opsForValue().get(redisKey)
 
@@ -44,14 +45,14 @@ class TokenExchangeFilter(
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid or expired session token")
             return
         }
-        
+
         val authUser = objectMapper.readValue(userJson, AuthUser::class.java)
-        
+
         //Spring Security
         val authorities = listOf(SimpleGrantedAuthority(authUser.role.name))
         val authToken = UsernamePasswordAuthenticationToken(authUser, null, authorities)
         SecurityContextHolder.getContext().authentication = authToken
-        
+
         request.setAttribute("CurrentUser", authUser)
 
         filterChain.doFilter(request, response)

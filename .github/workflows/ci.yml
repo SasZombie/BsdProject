@@ -53,6 +53,14 @@ jobs:
           cache: 'maven'
           cache-dependency-path: master/pom.xml
 
+      - name: Set up Node.js for Newman
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Newman
+        run: npm install -g newman
+
       - name: Make Maven Wrapper Executable
         run: chmod +x mvnw
 
@@ -61,6 +69,33 @@ jobs:
 
       - name: Build and Test Application
         run: ./mvnw clean package
+
+      - name: Start Application in Background
+        run: |
+          java -jar target/*.jar > app.log 2>&1 &
+          echo $! > app.pid
+
+      - name: Wait for Application Health Check
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Application failed to boot in time. Dumping logs:"
+          cat app.log
+          exit 1
+
+      - name: Run Postman E2E Verification
+        run: newman run master/src/test/resources/multisig-e2e.postman_collection.json
+
+      - name: Stop Application
+        if: always()
+        run: |
+          if [ -f app.pid ]; then
+            kill $(cat app.pid) || true
+          fi
 
       - name: Store Build Artifact
         uses: actions/upload-artifact@v4
