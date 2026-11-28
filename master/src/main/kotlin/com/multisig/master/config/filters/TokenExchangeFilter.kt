@@ -17,12 +17,12 @@ import tools.jackson.databind.ObjectMapper
 class TokenExchangeFilter(
     private val redisTemplate: StringRedisTemplate,
     private val objectMapper: ObjectMapper
-
+    
 ) : OncePerRequestFilter() {
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val uri = request.requestURI
-        return uri.startsWith("/api/v1/auth") ||
+        return uri.startsWith("/api/v1/auth") || uri.startsWith("/actuator") || 
                uri.startsWith("/v3/api-docs") ||
                uri.startsWith("/swagger-ui") ||
                uri == "/swagger-ui.html"
