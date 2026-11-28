@@ -641,7 +641,7 @@ Permissions
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-System Admin & /api/v1/requests/expenses/*, /api/v1/admin/*,
+System Admin & /api/v1/requests/expenses/*, /api/v1/admin/*, /api/v1/user/*
 /api/v1/logs/* & Can manage roles and see obfuscated logs (sensitive
 information is redacted) \\
 Employee & /api/v1/requests/expenses/* & Can only see/post own request \\
@@ -673,7 +673,8 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 \begin{lstlisting}[language=json]
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "role": "employee"
+  "role": "employee",
+  "name": "Name1"
 }
 \end{lstlisting}
 \textbf{Error Response 401 Unauthorized}
@@ -700,8 +701,23 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 
 \begin{lstlisting}[language=json]
 {
-  "message": "Posted",
-  "approvalsNeededCount" : "2"
+
+  "id": 9007199254740991,
+  "reason": "string",
+  "createdAt": "2026-11-28T12:14:35.189Z",
+  "updatedAt": "2026-11-28T12:14:35.189Z",
+  "status": "PENDING",
+  "ammountOfDollars": 9007199254740991,
+  "needsApprovalBy": [
+    "string"
+  ],
+  "approvedBy": [
+    "string"
+  ],
+  "rejectedBy": [
+    "string"
+  ]
+
 }
 \end{lstlisting}
 
@@ -713,15 +729,28 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 \begin{lstlisting}[language=json]
 {
   "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "file" : "file.csv"
+  "file" : "file.csv",
+  "reason": "Any reason"
 }
 \end{lstlisting}
 \textbf{Response 200 OK}
 
 \begin{lstlisting}[language=json]
 {
-  "message": "Posted",
-  "approvalsNeededCount" : "2"
+  "id": 9007199254740991,
+  "reason": "string",
+  "createdAt": "2026-11-28T12:15:27.083Z",
+  "updatedAt": "2026-11-28T12:15:27.083Z",
+  "status": "PENDING",
+  "needsApprovalBy": [
+    "string"
+  ],
+  "approvedBy": [
+    "string"
+  ],
+  "rejectedBy": [
+    "string"
+  ]
 }
 \end{lstlisting}
 
@@ -736,7 +765,7 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 
 \subsection{Reading Requests}
 
-\emph{GET /api/v1/requests/get} \\
+\emph{GET /api/v1/requests/payments/personal} \\
 \textbf{Auth:} Token, Role = "Manager, CEO, CFO, Board Director, Accountant" \\
 \textbf{Request Body:} \\
 \begin{lstlisting}[language=json]
@@ -748,49 +777,24 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 
 \begin{lstlisting}[language=json]
 {
-  "message": "Requests",
-  "activeRequestsCount": "12",
-  "pastRequestsCount" : "2",
-  "activeRequests" : [
-    {
-      "id": "1", 
-      "title": "DD-MM-YYYY, HH:MM, Requester business Expense",
-      "needToApprove": ["name", "name"...],
-      "approved": ["name, "name"],
-      "type": "Request",
-      "details":
-      {
-        "reason": "Dinner with business Partnerr",
-        "ammountUsd": "100"
-      }
-    },
-    {
-      "id": "2", 
-      "title": "DD-MM-YYYY, HH:MM, CSV file payment",
-      "needToApprove": ["name", "name"...],
-      "approved": ["name, "name"],
-      "type": "CSV",
-      "details":
-      {
-        "file": "file.csv",
-        "rowCount": "20"
-      }
-    }
-  ],
-  "pastRequests": [
-    {
-      "id": "1", 
-      "title": "DD-MM-YYYY, HH:MM, Requester business Expense",
-      "status": "approved"
-    },
-    {
-      "id": "2", 
-      "title": "DD-MM-YYYY, HH:MM, CSV file payment",
-      "status": "rejected",
-      "reason": "X denied",
-      "comments": "Any possible reason" 
-    }
-  ]
+  [
+  {
+    "id": 9007199254740991,
+    "reason": "string",
+    "createdAt": "2026-11-28T12:24:57.132Z",
+    "updatedAt": "2026-11-28T12:24:57.132Z",
+    "status": "PENDING",
+    "needsApprovalBy": [
+      "string"s
+    ],
+    "approvedBy": [
+      "string"
+    ],
+    "rejectedBy": [
+      "string"
+    ]
+  }
+]
 }
 \end{lstlisting}
 
@@ -823,7 +827,7 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 
 \subsection{Screenflow}
 
-\includegraphics{media/image5.png}
+\includegraphics[width=\linewidth, keepaspectratio]{media/image5.png}
 
 \subsection{Wireframes}
 
@@ -836,8 +840,15 @@ Accountant & /api/v1/requests/* & Can see its own requests and upload payments \
 \includegraphics{media/ActivePayments.png} \\
 \includegraphics{media/PastPayments.png}
 \subsubsection{Manager/CEO/CFO/Board Director}
-\includegraphics{media/PendingRequests.png} \\
-\includegraphics{media/PastPendingRequests.png}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{media/PendingRequests.png}
+\end{figure}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{media/PastPendingRequests.png}
+\end{figure}
+
 
 \subsubsection{Admin}
 \includegraphics{media/UserManagement2.png} \\
